@@ -20,14 +20,26 @@ self.addEventListener("fetch", (event) => {
       const base = url.pathname.slice(0, wasmIdx); // e.g. /popcorn
       const suffix = url.pathname.slice(wasmIdx + "/wasm".length); // e.g. /popcorn.js or /AtomVM.mjs ...
 
-      let clientUrl = null;
+      let pagePath = "";
       if (event.clientId) {
         try {
           const c = await self.clients.get(event.clientId);
-          clientUrl = c && c.url ? new URL(c.url) : null;
+          if (c && c.url) {
+            pagePath = new URL(c.url).pathname;
+          }
         } catch (_) {}
       }
-      const pagePath = clientUrl ? clientUrl.pathname : "";
+      if (!pagePath && req.referrer) {
+        try {
+          pagePath = new URL(req.referrer).pathname;
+        } catch (_) {}
+      }
+      if (!pagePath) {
+        try {
+          const ref = req.headers.get("Referer");
+          if (ref) pagePath = new URL(ref).pathname;
+        } catch (_) {}
+      }
       let variant = "/wasm-home";
       if (pagePath.endsWith("/ticker.html")) variant = "/wasm-ticker";
       else if (pagePath.endsWith("/parallel.html")) variant = "/wasm-parallel";
