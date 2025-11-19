@@ -10,107 +10,17 @@
       h1 { margin-bottom: 8px; }
       .muted { opacity: .8; }
       .nav { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
-      .nav button { padding: 8px 12px; border-radius: 8px; }
-      .tab { display: none; }
-      .tab.active { display: block; }
-      pre { background: color-mix(in oklab, Canvas, CanvasText 5%); padding: 12px; border-radius: 8px; min-height: 180px; overflow: auto; }
-      .ok { color: #16a34a; }
-      .err { color: #dc2626; }
+      .nav a button { padding: 8px 12px; border-radius: 8px; }
     </style>
   </head>
   <body>
     <h1>Popcorn (Elixir on WASM) - GitHub Pages Demo</h1>
+    <p class="muted">デモを選択してください。各ページで Logs が常に表示されます。<br>本家デモ: <a href="https://popcorn.swmansion.com/demos/eval/" target="_blank" rel="noopener">Elixir Eval Demo</a></p>
 
     <div class="nav">
-      <button data-tab="ticker">Ticker</button>
-      <button data-tab="parallel">Parallel</button>
-      <span id="status" class="muted"></span>
+      <a href="./ticker.html"><button>Ticker</button></a>
+      <a href="./parallel.html"><button>Parallel</button></a>
     </div>
-
-    <section id="tab-ticker" class="tab active">
-      <h3>Ticker（Elixir → JS プッシュ）</h3>
-      <p class="muted">Elixir のタイマーで 1 秒ごとに 10 回ログを出します（自動実行）。</p>
-    </section>
-
-    <section id="tab-parallel" class="tab">
-      <h3>Parallel 計算</h3>
-      <p class="muted">Elixir 側で fib を並列計算してログに出します（初回のみ）。</p>
-    </section>
-
-    <section id="logs-pane">
-      <h3>Logs</h3>
-      <p class="muted">Elixir 側の標準出力がここに表示されます（常に表示）。</p>
-      <pre id="logs"></pre>
-    </section>
-
-    <script type="module">
-      // Service Worker により COOP/COEP を付与して crossOriginIsolated を満たす
-      if (!crossOriginIsolated && 'serviceWorker' in navigator) {
-        try {
-          const alreadyReloaded = sessionStorage.getItem("reloadedForCOOPCOEP") === "1";
-          const reg = await navigator.serviceWorker.register("./sw.js", { scope: "./" });
-          await navigator.serviceWorker.ready;
-          if (!alreadyReloaded) {
-            sessionStorage.setItem("reloadedForCOOPCOEP", "1");
-            location.reload();
-          }
-        } catch (e) {}
-      }
-
-      // WASM instantiateStreaming のフォールバック
-      if (WebAssembly.instantiateStreaming) {
-        const _inst = WebAssembly.instantiateStreaming.bind(WebAssembly);
-        WebAssembly.instantiateStreaming = async (source, importObject) => {
-          try {
-            return await _inst(source, importObject);
-          } catch (e) {
-            const response = source && typeof source.then === "function"
-              ? await source
-              : (source instanceof Response ? source : await fetch(source));
-            const bytes = await response.arrayBuffer();
-            return await WebAssembly.instantiate(bytes, importObject);
-          }
-        };
-      }
-
-      // タブ UI
-      const statusEl = document.getElementById("status");
-      const tabs = ["ticker", "parallel"];
-      function setStatus(text, ok) {
-        statusEl.textContent = text;
-        statusEl.className = ok ? "ok" : "err";
-      }
-      function showTab(name) {
-        for (const t of tabs) {
-          const el = document.getElementById(`tab-${t}`);
-          if (!el) continue;
-          el.classList.toggle("active", t === name);
-        }
-      }
-      document.querySelectorAll('.nav button[data-tab]').forEach(btn => {
-        btn.addEventListener('click', () => showTab(btn.dataset.tab));
-      });
-
-      // Popcorn 初期化とログ出力
-      try {
-        const mod = await import("./wasm/popcorn.js");
-        const Popcorn = mod.Popcorn ?? mod.default ?? mod;
-        await Popcorn.init({
-          onStdout: (s) => appendLog(s, false),
-          onStderr: (s) => appendLog(s, true),
-          timeoutMs: 20000
-        });
-        setStatus("ready", true);
-      } catch (err) {
-        console.error("Popcorn initialization failed:", err);
-        setStatus("failed to init", false);
-      }
-
-      function appendLog(line, isErr) {
-        const el = document.getElementById("logs");
-        el.textContent += (isErr ? "[err] " : "") + line + "\n";
-      }
-    </script>
   </body>
   </html>
 
