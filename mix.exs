@@ -20,7 +20,8 @@ defmodule PopcornDemo.MixProject do
 
   defp deps do
     [
-      {:popcorn, "~> 0.1.0"}
+      # 本家デモ方式: eval 対応を得るため GitHub main を使用（将来は安定版に戻す）
+      {:popcorn, github: "software-mansion/popcorn", branch: "main"}
     ]
   end
 end
