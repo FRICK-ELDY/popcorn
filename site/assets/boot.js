@@ -35,7 +35,13 @@ export async function loadPopcorn(base) {
   for (const f of candidates) {
     try {
       const mod = await import(`${base}/${f}`);
-      return mod.Popcorn ?? mod.default ?? mod;
+      const entry = mod.Popcorn ?? mod.default ?? mod;
+      const hasInit = entry && typeof entry.init === 'function';
+      const isFn = typeof entry === 'function';
+      if (hasInit || isFn) {
+        return entry;
+      }
+      lastErr = new Error(`Module ${f} loaded but no init function found`);
     } catch (e) {
       lastErr = e;
     }
