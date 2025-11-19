@@ -33,9 +33,8 @@
     </section>
 
     <script type="module">
-      // Clear logs immediately on page load and set variant cookie
+      // Clear logs immediately on page load
       document.getElementById("logs").textContent = "";
-      document.cookie = "popcornVariant=parallel; path=/; SameSite=Lax";
 
       // Ensure crossOriginIsolated via Service Worker
       if (!crossOriginIsolated && 'serviceWorker' in navigator) {
@@ -72,7 +71,7 @@
         statusEl.className = ok ? "ok" : "err";
       }
       try {
-        const mod = await import("./wasm/popcorn.js");
+        const mod = await import("./wasm-parallel/popcorn.js");
         const Popcorn = mod.Popcorn ?? mod.default ?? mod;
         await Popcorn.init({
           onStdout: (s) => appendLog(s, false),

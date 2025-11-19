@@ -58,9 +58,7 @@
       }
 
       try {
-        // tag this page as 'home' for SW rewriting
-        document.cookie = "popcornVariant=home; path=/; SameSite=Lax";
-        const mod = await import("./wasm/popcorn.js");
+        const mod = await import("./wasm-home/popcorn.js");
         const Popcorn = mod.Popcorn ?? mod.default ?? mod;
         await Popcorn.init({
           onStdout: (s) => appendLog(s, false),
