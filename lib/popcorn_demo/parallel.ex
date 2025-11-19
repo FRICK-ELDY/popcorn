@@ -7,12 +7,11 @@ defmodule PopcornDemo.Parallel do
 
   @impl true
   def init(_args) do
-    Process.send_after(self(), :run, 0)
-    {:ok, %{}}
+    {:ok, %{}, {:continue, :run}}
   end
 
   @impl true
-  def handle_info(:run, state) do
+  def handle_continue(:run, state) do
     start_ms = System.monotonic_time(:millisecond)
     for n <- [30, 31, 32] do
       {^n, v} = fib(n)
