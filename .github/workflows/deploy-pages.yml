@@ -35,19 +35,28 @@ jobs:
         run: mix deps.get
 
       - name: Build Home (MIX_ENV=home)
+        env:
+          MIX_ENV: home
+          POPCORN_DEMO: home
         run: |
-          MIX_ENV=home mix compile
-          MIX_ENV=home mix popcorn.cook
+          mix compile
+          mix popcorn.cook
 
       - name: Build Ticker (MIX_ENV=ticker)
+        env:
+          MIX_ENV: ticker
+          POPCORN_DEMO: ticker
         run: |
-          MIX_ENV=ticker mix compile
-          MIX_ENV=ticker mix popcorn.cook
+          mix compile
+          mix popcorn.cook
 
       - name: Build Parallel (MIX_ENV=parallel)
+        env:
+          MIX_ENV: parallel
+          POPCORN_DEMO: parallel
         run: |
-          MIX_ENV=parallel mix compile
-          MIX_ENV=parallel mix popcorn.cook
+          mix compile
+          mix popcorn.cook
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

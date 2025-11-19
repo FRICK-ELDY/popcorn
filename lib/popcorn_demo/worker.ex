@@ -2,7 +2,13 @@ defmodule PopcornDemo.Worker do
   use GenServer
 
   @process_name :main
-	@demo Application.compile_env(:popcorn_demo, :demo, :home)
+	@demo (
+		case System.get_env("POPCORN_DEMO") do
+			"ticker" -> :ticker
+			"parallel" -> :parallel
+			_ -> :home
+		end
+	)
 
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: @process_name)
