@@ -71,6 +71,8 @@
         statusEl.className = ok ? "ok" : "err";
       }
       try {
+        // set variant cookie for SW rewriting in nested imports
+        document.cookie = "popcornVariant=ticker; path=/; SameSite=Lax";
         const Popcorn = await loadPopcorn("./wasm-ticker");
         await Popcorn.init({
           onStdout: (s) => appendLog(s, false),
