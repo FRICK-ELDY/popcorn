@@ -21,6 +21,7 @@ self.addEventListener("fetch", (event) => {
       const suffix = url.pathname.slice(wasmIdx + "/wasm".length); // e.g. /popcorn.js or /AtomVM.mjs ...
 
       let pagePath = "";
+      let refPath = "";
       if (event.clientId) {
         try {
           const c = await self.clients.get(event.clientId);
@@ -31,18 +32,28 @@ self.addEventListener("fetch", (event) => {
       }
       if (!pagePath && req.referrer) {
         try {
-          pagePath = new URL(req.referrer).pathname;
+          const u = new URL(req.referrer);
+          pagePath = u.pathname;
+          refPath = u.pathname;
         } catch (_) {}
       }
       if (!pagePath) {
         try {
           const ref = req.headers.get("Referer");
-          if (ref) pagePath = new URL(ref).pathname;
+          if (ref) {
+            const u = new URL(ref);
+            pagePath = u.pathname;
+            refPath = u.pathname;
+          }
         } catch (_) {}
       }
       let variant = "/wasm-home";
-      if (pagePath.endsWith("/ticker.html")) variant = "/wasm-ticker";
-      else if (pagePath.endsWith("/parallel.html")) variant = "/wasm-parallel";
+      const anyPath = `${pagePath} ${refPath}`;
+      if (pagePath.endsWith("/ticker.html") || anyPath.includes("/wasm-ticker/")) {
+        variant = "/wasm-ticker";
+      } else if (pagePath.endsWith("/parallel.html") || anyPath.includes("/wasm-parallel/")) {
+        variant = "/wasm-parallel";
+      }
 
       const newPath = `${base}${variant}${suffix}`;
       const newUrl = new URL(newPath, url.origin);
