@@ -22,6 +22,19 @@ self.addEventListener("fetch", (event) => {
 
       let pagePath = "";
       let refPath = "";
+      // 1) Prefer page cookie (set by each page)
+      let variantFromCookie = "";
+      try {
+        const cookie = req.headers.get("Cookie") || "";
+        // simple parse
+        cookie.split(";").forEach(kv => {
+          const [k, v] = kv.split("=");
+          if (k && k.trim() === "popcornVariant" && v) {
+            variantFromCookie = decodeURIComponent(v.trim());
+          }
+        });
+      } catch (_) {}
+
       if (event.clientId) {
         try {
           const c = await self.clients.get(event.clientId);
@@ -49,7 +62,11 @@ self.addEventListener("fetch", (event) => {
       }
       let variant = "/wasm-home";
       const anyPath = `${pagePath} ${refPath}`;
-      if (pagePath.endsWith("/ticker.html") || anyPath.includes("/wasm-ticker/")) {
+      if (variantFromCookie === "ticker") {
+        variant = "/wasm-ticker";
+      } else if (variantFromCookie === "parallel") {
+        variant = "/wasm-parallel";
+      } else if (pagePath.endsWith("/ticker.html") || anyPath.includes("/wasm-ticker/")) {
         variant = "/wasm-ticker";
       } else if (pagePath.endsWith("/parallel.html") || anyPath.includes("/wasm-parallel/")) {
         variant = "/wasm-parallel";
