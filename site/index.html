@@ -9,6 +9,55 @@
     <h1>Popcorn (Elixir on WASM) - GitHub Pages Demo</h1>
     <p>ブラウザのコンソールを開いてログを確認してください。</p>
     <script type="module">
+      // Try to enable crossOriginIsolated via Service Worker (for SharedArrayBuffer, etc.)
+      // Page will reload once after SW activation.
+      if (!crossOriginIsolated && 'serviceWorker' in navigator) {
+        try {
+          const alreadyReloaded = sessionStorage.getItem("reloadedForCOOPCOEP") === "1";
+          const reg = await navigator.serviceWorker.register("./sw.js", { scope: "./" });
+          await navigator.serviceWorker.ready;
+          if (!alreadyReloaded) {
+            sessionStorage.setItem("reloadedForCOOPCOEP", "1");
+            location.reload();
+            // return here to avoid double-running init after reload
+          }
+        } catch (e) {
+          console.warn("ServiceWorker registration failed:", e);
+        }
+      }
+
+      // Network instrumentation to see failing requests (404/other)
+      if (window.fetch) {
+        const _fetch = window.fetch.bind(window);
+        window.fetch = async (...args) => {
+          const res = await _fetch(...args);
+          if (!res.ok) {
+            try {
+              const url = (args && args[0] && args[0].url) ? args[0].url : args[0];
+              console.error("[fetch]", url, res.status, res.statusText);
+            } catch {}
+          }
+          return res;
+        };
+      }
+
+      // Fallback if instantiateStreaming fails due to MIME type
+      if (WebAssembly.instantiateStreaming) {
+        const _inst = WebAssembly.instantiateStreaming.bind(WebAssembly);
+        WebAssembly.instantiateStreaming = async (source, importObject) => {
+          try {
+            return await _inst(source, importObject);
+          } catch (e) {
+            console.warn("instantiateStreaming failed, falling back to arrayBuffer:", e);
+            const response = source && typeof source.then === "function"
+              ? await source
+              : (source instanceof Response ? source : await fetch(source));
+            const bytes = await response.arrayBuffer();
+            return await WebAssembly.instantiate(bytes, importObject);
+          }
+        };
+      }
+
       window.addEventListener("unhandledrejection", (e) => {
         console.error("Unhandled promise rejection:", e.reason || e);
       });
