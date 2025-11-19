@@ -4,8 +4,7 @@ defmodule PopcornDemo.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      PopcornDemo.Worker,
-      PopcornDemo.Parallel
+			PopcornDemo.Worker
     ]
 
     opts = [strategy: :one_for_one, name: PopcornDemo.Supervisor]

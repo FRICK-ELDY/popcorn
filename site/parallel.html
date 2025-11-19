@@ -79,6 +79,8 @@
           timeoutMs: 20000
         });
         setStatus("ready", true);
+        // Try to trigger parallel on Elixir side
+        tryTrigger(Popcorn, "start_parallel");
       } catch (err) {
         console.error("Popcorn initialization failed:", err);
         setStatus("failed to init", false);
@@ -87,6 +89,14 @@
       function appendLog(line, isErr) {
         const el = document.getElementById("logs");
         el.textContent += (isErr ? "[err] " : "") + line + "\n";
+      }
+
+      async function tryTrigger(Popcorn, cmd) {
+        try { if (typeof Popcorn.send === "function") Popcorn.send("main", cmd); } catch {}
+        try { if (typeof Popcorn.send === "function") Popcorn.send(":main", cmd); } catch {}
+        try { if (typeof Popcorn.call === "function") await Popcorn.call("main", cmd); } catch {}
+        try { if (typeof Popcorn.call === "function") await Popcorn.call(":main", cmd); } catch {}
+        try { if (typeof Popcorn.apply === "function") await Popcorn.apply("Elixir.PopcornDemo.Worker", "handle_info", [cmd, {}]); } catch {}
       }
     </script>
   </body>

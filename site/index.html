@@ -15,12 +15,65 @@
   </head>
   <body>
     <h1>Popcorn (Elixir on WASM) - GitHub Pages Demo</h1>
-    <p class="muted">デモを選択してください。各ページで Logs が常に表示されます。<br>本家デモ: <a href="https://popcorn.swmansion.com/demos/eval/" target="_blank" rel="noopener">Elixir Eval Demo</a></p>
+    <p class="muted">Home では Hello from WASM! のみ。各デモは専用ページで実行されます。<br>本家デモ: <a href="https://popcorn.swmansion.com/demos/eval/" target="_blank" rel="noopener">Elixir Eval Demo</a></p>
 
     <div class="nav">
       <a href="./ticker.html"><button>Ticker</button></a>
       <a href="./parallel.html"><button>Parallel</button></a>
     </div>
+
+    <section id="logs-pane">
+      <h3>Logs</h3>
+      <pre id="logs"></pre>
+    </section>
+
+    <script type="module">
+      document.getElementById("logs").textContent = "";
+
+      if (!crossOriginIsolated && 'serviceWorker' in navigator) {
+        try {
+          const alreadyReloaded = sessionStorage.getItem("reloadedForCOOPCOEP") === "1";
+          const reg = await navigator.serviceWorker.register("./sw.js", { scope: "./" });
+          await navigator.serviceWorker.ready;
+          if (!alreadyReloaded) {
+            sessionStorage.setItem("reloadedForCOOPCOEP", "1");
+            location.reload();
+          }
+        } catch (e) {}
+      }
+
+      if (WebAssembly.instantiateStreaming) {
+        const _inst = WebAssembly.instantiateStreaming.bind(WebAssembly);
+        WebAssembly.instantiateStreaming = async (source, importObject) => {
+          try {
+            return await _inst(source, importObject);
+          } catch (e) {
+            const response = source && typeof source.then === "function"
+              ? await source
+              : (source instanceof Response ? source : await fetch(source));
+            const bytes = await response.arrayBuffer();
+            return await WebAssembly.instantiate(bytes, importObject);
+          }
+        };
+      }
+
+      try {
+        const mod = await import("./wasm/popcorn.js");
+        const Popcorn = mod.Popcorn ?? mod.default ?? mod;
+        await Popcorn.init({
+          onStdout: (s) => appendLog(s, false),
+          onStderr: (s) => appendLog(s, true),
+          timeoutMs: 20000
+        });
+      } catch (err) {
+        console.error("Popcorn initialization failed:", err);
+      }
+
+      function appendLog(line, isErr) {
+        const el = document.getElementById("logs");
+        el.textContent += (isErr ? "[err] " : "") + line + "\n";
+      }
+    </script>
   </body>
   </html>
 
