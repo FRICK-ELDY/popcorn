@@ -13,15 +13,12 @@ defmodule PopcornDemo.Parallel do
 
   @impl true
   def handle_info(:run, state) do
-    {micros, _} =
-      :timer.tc(fn ->
-        for n <- [30, 31, 32] do
-          {^n, v} = fib(n)
-          IO.puts("parallel fib(#{n}) = #{v}")
-        end
-      end)
-
-    ms = div(micros, 1000)
+    start_ms = System.monotonic_time(:millisecond)
+    for n <- [30, 31, 32] do
+      {^n, v} = fib(n)
+      IO.puts("parallel fib(#{n}) = #{v}")
+    end
+    ms = System.monotonic_time(:millisecond) - start_ms
     IO.puts("parallel done in #{ms} ms")
     {:noreply, state}
   end
