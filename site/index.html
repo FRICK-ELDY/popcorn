@@ -21,24 +21,7 @@
             location.reload();
             // return here to avoid double-running init after reload
           }
-        } catch (e) {
-          console.warn("ServiceWorker registration failed:", e);
-        }
-      }
-
-      // Network instrumentation to see failing requests (404/other)
-      if (window.fetch) {
-        const _fetch = window.fetch.bind(window);
-        window.fetch = async (...args) => {
-          const res = await _fetch(...args);
-          if (!res.ok) {
-            try {
-              const url = (args && args[0] && args[0].url) ? args[0].url : args[0];
-              console.error("[fetch]", url, res.status, res.statusText);
-            } catch {}
-          }
-          return res;
-        };
+        } catch (e) {}
       }
 
       // Fallback if instantiateStreaming fails due to MIME type
@@ -48,7 +31,6 @@
           try {
             return await _inst(source, importObject);
           } catch (e) {
-            console.warn("instantiateStreaming failed, falling back to arrayBuffer:", e);
             const response = source && typeof source.then === "function"
               ? await source
               : (source instanceof Response ? source : await fetch(source));
@@ -58,20 +40,14 @@
         };
       }
 
-      window.addEventListener("unhandledrejection", (e) => {
-        console.error("Unhandled promise rejection:", e.reason || e);
-      });
-      console.log("Loading Popcorn module…");
       try {
         const mod = await import("./wasm/popcorn.js");
-        console.log("Popcorn module loaded:", Object.keys(mod));
         const Popcorn = mod.Popcorn ?? mod.default ?? mod;
-        const result = await Popcorn.init({
+        await Popcorn.init({
           onStdout: (s) => console.log("[WASM]", s),
           onStderr: (s) => console.error("[WASM]", s),
           timeoutMs: 20000
         });
-        console.log("Popcorn.init result:", result);
       } catch (err) {
         console.error("Popcorn initialization failed:", err);
       }
