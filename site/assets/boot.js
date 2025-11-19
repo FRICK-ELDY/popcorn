@@ -2,7 +2,7 @@ export async function ensureCOI() {
   if (!crossOriginIsolated && 'serviceWorker' in navigator) {
     try {
       const alreadyReloaded = sessionStorage.getItem('reloadedForCOOPCOEP') === '1';
-      await navigator.serviceWorker.register('./sw.js', { scope: './' });
+      await navigator.serviceWorker.register('./assets/service_worker.js', { scope: './' });
       await navigator.serviceWorker.ready;
       if (!alreadyReloaded) {
         sessionStorage.setItem('reloadedForCOOPCOEP', '1');
