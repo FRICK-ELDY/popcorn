@@ -22,63 +22,18 @@
     </section>
 
     <script type="module">
+      import { startPopcorn } from "./assets/boot.js";
       document.getElementById("logs").textContent = "";
 
-      // Ensure crossOriginIsolated via Service Worker
-      if (!crossOriginIsolated && 'serviceWorker' in navigator) {
-        try {
-          const alreadyReloaded = sessionStorage.getItem("reloadedForCOOPCOEP") === "1";
-          const reg = await navigator.serviceWorker.register("./sw.js", { scope: "./" });
-          await navigator.serviceWorker.ready;
-          if (!alreadyReloaded) {
-            sessionStorage.setItem("reloadedForCOOPCOEP", "1");
-            location.reload();
-          }
-        } catch (e) {}
-      }
-
-      // WASM instantiateStreaming fallback
-      if (WebAssembly.instantiateStreaming) {
-        const _inst = WebAssembly.instantiateStreaming.bind(WebAssembly);
-        WebAssembly.instantiateStreaming = async (source, importObject) => {
-          try {
-            return await _inst(source, importObject);
-          } catch (e) {
-            const response = source && typeof source.then === "function"
-              ? await source
-              : (source instanceof Response ? source : await fetch(source));
-            const bytes = await response.arrayBuffer();
-            return await WebAssembly.instantiate(bytes, importObject);
-          }
-        };
-      }
-
       try {
-        const Popcorn = await loadPopcorn("./wasm");
-        await Popcorn.init({
+        await startPopcorn({
+          base: "./wasm",
           onStdout: (s) => appendLog(s, false),
           onStderr: (s) => appendLog(s, true),
           timeoutMs: 20000
         });
       } catch (err) {
         console.error("Popcorn initialization failed:", err);
-      }
-
-      async function loadPopcorn(base) {
-        const candidates = ["popcorn.js", "popcorn.mjs", "index.js", "index.mjs"];
-        let lastErr = null;
-        for (const f of candidates) {
-          try {
-            const mod = await import(`${base}/${f}`);
-            const Popcorn = mod.Popcorn ?? mod.default ?? mod;
-            if (Popcorn && typeof Popcorn.init === "function") {
-              return Popcorn;
-            }
-          } catch (e) {
-            lastErr = e;
-          }
-        }
-        throw lastErr || new Error("Popcorn entrypoint not found");
       }
 
       function appendLog(line, isErr) {
