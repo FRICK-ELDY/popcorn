@@ -58,8 +58,7 @@
       }
 
       try {
-        const mod = await import("./wasm-home/popcorn.js");
-        const Popcorn = mod.Popcorn ?? mod.default ?? mod;
+        const Popcorn = await loadPopcorn("./wasm-home");
         await Popcorn.init({
           onStdout: (s) => appendLog(s, false),
           onStderr: (s) => appendLog(s, true),
@@ -67,6 +66,24 @@
         });
       } catch (err) {
         console.error("Popcorn initialization failed:", err);
+      }
+
+      async function loadPopcorn(base) {
+        const candidates = ["popcorn.js", "popcorn.mjs", "index.js", "index.mjs"];
+        let lastErr = null;
+        for (const f of candidates) {
+          try {
+            const mod = await import(`${base}/${f}`);
+            const Popcorn = mod.Popcorn ?? mod.default ?? mod;
+            if (Popcorn && typeof Popcorn.init === "function") {
+              appendLog(`[js] loaded ${base}/${f}`, false);
+              return Popcorn;
+            }
+          } catch (e) {
+            lastErr = e;
+          }
+        }
+        throw lastErr || new Error("Popcorn entrypoint not found");
       }
 
       function appendLog(line, isErr) {

@@ -71,8 +71,7 @@
         statusEl.className = ok ? "ok" : "err";
       }
       try {
-        const mod = await import("./wasm-parallel/popcorn.js");
-        const Popcorn = mod.Popcorn ?? mod.default ?? mod;
+        const Popcorn = await loadPopcorn("./wasm-parallel");
         await Popcorn.init({
           onStdout: (s) => appendLog(s, false),
           onStderr: (s) => appendLog(s, true),
@@ -90,6 +89,24 @@
       }
 
       // no explicit trigger needed; this build auto-runs parallel on init
+
+      async function loadPopcorn(base) {
+        const candidates = ["popcorn.js", "popcorn.mjs", "index.js", "index.mjs"];
+        let lastErr = null;
+        for (const f of candidates) {
+          try {
+            const mod = await import(`${base}/${f}`);
+            const Popcorn = mod.Popcorn ?? mod.default ?? mod;
+            if (Popcorn && typeof Popcorn.init === "function") {
+              appendLog(`[js] loaded ${base}/${f}`, false);
+              return Popcorn;
+            }
+          } catch (e) {
+            lastErr = e;
+          }
+        }
+        throw lastErr || new Error("Popcorn entrypoint not found");
+      }
     </script>
   </body>
   </html>
