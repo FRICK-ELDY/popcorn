@@ -11,13 +11,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   event.respondWith((async () => {
-    const url = new URL(req.url);
-    // Allow embedding upstream demo page without COOP/COEP on our /eval.html
-    const isEvalEmbed = url.pathname.endsWith("/eval.html");
     const res = await fetch(req);
-    if (isEvalEmbed) {
-      return res;
-    }
     const newHeaders = new Headers(res.headers);
     newHeaders.set("Cross-Origin-Opener-Policy", "same-origin");
     newHeaders.set("Cross-Origin-Embedder-Policy", "require-corp");
