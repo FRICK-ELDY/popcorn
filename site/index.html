@@ -1,0 +1,17 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Popcorn on GitHub Pages</title>
+  </head>
+  <body>
+    <h1>Popcorn (Elixir on WASM) - GitHub Pages Demo</h1>
+    <p>ブラウザのコンソールを開いてログを確認してください。</p>
+    <script type="module">
+      import { Popcorn } from "./wasm/popcorn.js";
+      await Popcorn.init({ onStdout: console.log });
+    </script>
+  </body>
+  </html>
+
+

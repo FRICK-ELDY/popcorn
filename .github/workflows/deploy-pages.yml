@@ -1,0 +1,59 @@
+name: Deploy Popcorn demo to GitHub Pages
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Elixir/OTP
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: '1.17.3'   # Popcorn 要件
+          otp-version: '26.0.2'      # Popcorn 要件
+
+      - name: Install Hex/Rebar
+        run: |
+          mix local.hex --force
+          mix local.rebar --force
+
+      - name: Get deps
+        run: mix deps.get
+
+      - name: Compile
+        run: mix compile
+
+      - name: Cook Popcorn (WASM artifacts to site/wasm)
+        run: mix popcorn.cook
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+

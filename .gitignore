@@ -1,0 +1,13 @@
+# Mix / Elixir
+/_build
+/deps
+/.elixir_ls
+
+# Popcorn build artifacts (deploy は Actions が行う)
+/site/wasm/
+
+# OS
+.DS_Store
+Thumbs.db
+
+
