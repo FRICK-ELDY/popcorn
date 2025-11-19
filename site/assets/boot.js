@@ -39,10 +39,12 @@ export async function loadPopcorn(base) {
       const hasInit = entry && typeof entry.init === 'function';
       const isFn = typeof entry === 'function';
       if (hasInit || isFn) {
+        console.debug(`[boot] using ${base}/${f}`);
         return entry;
       }
       lastErr = new Error(`Module ${f} loaded but no init function found`);
     } catch (e) {
+      console.debug(`[boot] failed to import ${base}/${f}`, e);
       lastErr = e;
     }
   }

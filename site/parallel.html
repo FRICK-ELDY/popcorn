@@ -43,6 +43,9 @@
       } catch (err) {
         console.error("Popcorn initialization failed:", err);
         setStatus("failed to init", false);
+        const msg = (err && err.message) ? err.message : String(err);
+        const el = document.getElementById("logs");
+        el.textContent += `[js err] ${msg}\n`;
       }
 
       function appendLog(line, isErr) {
