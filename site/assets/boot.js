@@ -34,17 +34,20 @@ export async function loadPopcorn(base) {
   let lastErr = null;
   for (const f of candidates) {
     try {
-      const mod = await import(`${base}/${f}`);
+      // Resolve against the page URL (not this module's URL) to avoid ./assets/wasm/... resolution
+      const baseClean = (base || './wasm').replace(/\/$/, '');
+      const url = new URL(`${baseClean}/${f}`, document.baseURI).href;
+      const mod = await import(url);
       const entry = mod.Popcorn ?? mod.default ?? mod;
       const hasInit = entry && typeof entry.init === 'function';
       const isFn = typeof entry === 'function';
       if (hasInit || isFn) {
-        console.debug(`[boot] using ${base}/${f}`);
+        console.debug(`[boot] using ${url}`);
         return entry;
       }
       lastErr = new Error(`Module ${f} loaded but no init function found`);
     } catch (e) {
-      console.debug(`[boot] failed to import ${base}/${f}`, e);
+      console.debug(`[boot] failed to import ${f} from base ${base}`, e);
       lastErr = e;
     }
   }
