@@ -20,9 +20,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
       - name: Set up Elixir/OTP
         uses: erlef/setup-beam@v1
         with:
@@ -43,31 +40,6 @@ jobs:
           mix popcorn.cook
           echo "::group::site/wasm contents"
           ls -la site/wasm || true
-          echo "::endgroup::"
-
-      - name: Create popcorn entry shim if missing
-        run: |
-          set -e
-          BASE=site/wasm
-          if [ ! -f "$BASE/popcorn.js" ]; then
-            ENTRY=$(ls "$BASE"/*popcorn*.mjs "$BASE"/*popcorn*.js 2>/dev/null | head -n1 || true)
-            if [ -z "$ENTRY" ]; then ENTRY=$(ls "$BASE"/*.mjs 2>/dev/null | head -n1 || true); fi
-            if [ -z "$ENTRY" ]; then ENTRY=$(ls "$BASE"/*.js 2>/dev/null | head -n1 || true); fi
-            echo "Selected entry: $ENTRY"
-            if [ -n "$ENTRY" ]; then
-              bn=$(basename "$ENTRY")
-              {
-                echo "// Auto-generated shim to normalize Popcorn entry"
-                echo "import * as mod from './__ENTRY__';"
-                echo "const Popcorn = mod.Popcorn || mod.default || mod;"
-                echo "export default Popcorn;"
-                echo "export { Popcorn };"
-              } > "$BASE/popcorn.js"
-              sed -i "s#__ENTRY__#$bn#g" "$BASE/popcorn.js"
-            fi
-          fi
-          echo "::group::site/wasm after shim"
-          ls -la "$BASE" || true
           echo "::endgroup::"
 
       - name: Upload Pages artifact
