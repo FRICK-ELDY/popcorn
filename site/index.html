@@ -20,22 +20,14 @@
   </head>
   <body>
     <h1>Popcorn (Elixir on WASM) - GitHub Pages Demo</h1>
-    <p class="muted">タブでデモを切り替えできます。<br>本家デモは外部サイトで確認: <a href="https://popcorn.swmansion.com/demos/eval/" target="_blank" rel="noopener">Elixir Eval Demo</a></p>
 
     <div class="nav">
-      <button data-tab="logs">Logs</button>
       <button data-tab="ticker">Ticker</button>
       <button data-tab="parallel">Parallel</button>
       <span id="status" class="muted"></span>
     </div>
 
-    <section id="tab-logs" class="tab active">
-      <h3>Logs</h3>
-      <p class="muted">Elixir 側の標準出力がここに表示されます。</p>
-      <pre id="logs"></pre>
-    </section>
-
-    <section id="tab-ticker" class="tab">
+    <section id="tab-ticker" class="tab active">
       <h3>Ticker（Elixir → JS プッシュ）</h3>
       <p class="muted">Elixir のタイマーで 1 秒ごとに 10 回ログを出します（自動実行）。</p>
     </section>
@@ -43,6 +35,12 @@
     <section id="tab-parallel" class="tab">
       <h3>Parallel 計算</h3>
       <p class="muted">Elixir 側で fib を並列計算してログに出します（初回のみ）。</p>
+    </section>
+
+    <section id="logs-pane">
+      <h3>Logs</h3>
+      <p class="muted">Elixir 側の標準出力がここに表示されます（常に表示）。</p>
+      <pre id="logs"></pre>
     </section>
 
     <script type="module">
@@ -77,7 +75,7 @@
 
       // タブ UI
       const statusEl = document.getElementById("status");
-      const tabs = ["logs", "ticker", "parallel"];
+      const tabs = ["ticker", "parallel"];
       function setStatus(text, ok) {
         statusEl.textContent = text;
         statusEl.className = ok ? "ok" : "err";
