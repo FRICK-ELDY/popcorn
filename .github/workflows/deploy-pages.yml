@@ -42,6 +42,31 @@ jobs:
           ls -la site/wasm || true
           echo "::endgroup::"
 
+      - name: Create popcorn entry shim if missing
+        run: |
+          set -e
+          BASE=site/wasm
+          if [ ! -f "$BASE/popcorn.js" ]; then
+            ENTRY=$(ls "$BASE"/*popcorn*.mjs "$BASE"/*popcorn*.js 2>/dev/null | head -n1 || true)
+            if [ -z "$ENTRY" ]; then ENTRY=$(ls "$BASE"/*.mjs 2>/dev/null | head -n1 || true); fi
+            if [ -z "$ENTRY" ]; then ENTRY=$(ls "$BASE"/*.js 2>/dev/null | head -n1 || true); fi
+            echo "Selected entry: $ENTRY"
+            if [ -n "$ENTRY" ]; then
+              bn=$(basename "$ENTRY")
+              cat > "$BASE/popcorn.js" <<'EOF'
+// Auto-generated shim to normalize Popcorn entry
+import * as mod from './__ENTRY__';
+const Popcorn = mod.Popcorn || mod.default || mod;
+export default Popcorn;
+export { Popcorn };
+EOF
+              sed -i "s#__ENTRY__#$bn#g" "$BASE/popcorn.js"
+            fi
+          fi
+          echo "::group::site/wasm after shim"
+          ls -la "$BASE" || true
+          echo "::endgroup::"
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

@@ -30,16 +30,20 @@ export function installWasmFallback() {
 }
 
 export async function loadPopcorn(base, logFn) {
-  const candidates = ["popcorn.js", "popcorn.mjs", "index.js", "index.mjs"];
+  const candidates = [
+    "popcorn.js",
+    "popcorn.mjs",
+    "popcorn_iframe.js",
+    "index.js",
+    "index.mjs"
+  ];
   let lastErr = null;
   for (const f of candidates) {
     try {
       const mod = await import(`${base}/${f}`);
-      const Popcorn = mod.Popcorn ?? mod.default ?? mod;
-      if (Popcorn && typeof Popcorn.init === "function") {
-        logFn && logFn(`[js] loaded ${base}/${f}`);
-        return Popcorn;
-      }
+      const candidate = mod.Popcorn ?? mod.default ?? mod;
+      logFn && logFn(`[js] loaded ${base}/${f}`);
+      return candidate;
     } catch (e) {
       lastErr = e;
     }
@@ -50,9 +54,17 @@ export async function loadPopcorn(base, logFn) {
 export async function startPopcorn({ base = "./wasm", onStdout, onStderr, timeoutMs = 20000, logFn }) {
   await ensureCOI();
   installWasmFallback();
-  const Popcorn = await loadPopcorn(base, logFn);
-  await Popcorn.init({ onStdout, onStderr, timeoutMs });
-  return Popcorn;
+  const entry = await loadPopcorn(base, logFn);
+  // Support both { init(...) } and function init(...)
+  const initFn =
+    (entry && typeof entry.init === "function") ? entry.init :
+    (typeof entry === "function") ? entry :
+    null;
+  if (!initFn) {
+    throw new Error("Popcorn init function not found on loaded module");
+  }
+  await initFn({ onStdout, onStderr, timeoutMs });
+  return entry;
 }
 
 
