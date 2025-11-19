@@ -20,6 +20,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
       - name: Set up Elixir/OTP
         uses: erlef/setup-beam@v1
         with:
@@ -53,13 +56,13 @@ jobs:
             echo "Selected entry: $ENTRY"
             if [ -n "$ENTRY" ]; then
               bn=$(basename "$ENTRY")
-              cat > "$BASE/popcorn.js" <<'EOF'
-// Auto-generated shim to normalize Popcorn entry
-import * as mod from './__ENTRY__';
-const Popcorn = mod.Popcorn || mod.default || mod;
-export default Popcorn;
-export { Popcorn };
-EOF
+              {
+                echo "// Auto-generated shim to normalize Popcorn entry"
+                echo "import * as mod from './__ENTRY__';"
+                echo "const Popcorn = mod.Popcorn || mod.default || mod;"
+                echo "export default Popcorn;"
+                echo "export { Popcorn };"
+              } > "$BASE/popcorn.js"
               sed -i "s#__ENTRY__#$bn#g" "$BASE/popcorn.js"
             fi
           fi
