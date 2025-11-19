@@ -73,7 +73,7 @@
       try {
         // set variant cookie for SW rewriting in nested imports
         document.cookie = "popcornVariant=ticker; path=/; SameSite=Lax";
-        const Popcorn = await loadPopcorn("./wasm-ticker");
+        const Popcorn = await loadPopcorn("./wasm");
         await Popcorn.init({
           onStdout: (s) => appendLog(s, false),
           onStderr: (s) => appendLog(s, true),

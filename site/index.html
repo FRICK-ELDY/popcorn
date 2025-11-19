@@ -58,7 +58,7 @@
       }
 
       try {
-        const Popcorn = await loadPopcorn("./wasm-home");
+        const Popcorn = await loadPopcorn("./wasm");
         await Popcorn.init({
           onStdout: (s) => appendLog(s, false),
           onStderr: (s) => appendLog(s, true),

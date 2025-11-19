@@ -38,6 +38,9 @@ jobs:
         run: |
           mix compile
           mix popcorn.cook
+          echo "::group::site/wasm contents"
+          ls -la site/wasm || true
+          echo "::endgroup::"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

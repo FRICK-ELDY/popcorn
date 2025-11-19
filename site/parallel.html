@@ -73,7 +73,7 @@
       try {
         // set variant cookie for SW rewriting in nested imports
         document.cookie = "popcornVariant=parallel; path=/; SameSite=Lax";
-        const Popcorn = await loadPopcorn("./wasm-parallel");
+        const Popcorn = await loadPopcorn("./wasm");
         await Popcorn.init({
           onStdout: (s) => appendLog(s, false),
           onStderr: (s) => appendLog(s, true),
