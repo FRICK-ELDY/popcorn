@@ -71,7 +71,7 @@
         statusEl.className = ok ? "ok" : "err";
       }
       try {
-        const mod = await import("./wasm-parallel/popcorn.js");
+        const mod = await import("./wasm/popcorn.js");
         const Popcorn = mod.Popcorn ?? mod.default ?? mod;
         await Popcorn.init({
           onStdout: (s) => appendLog(s, false),

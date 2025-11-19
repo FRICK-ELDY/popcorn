@@ -11,7 +11,7 @@ defmodule PopcornDemo.Worker do
   @impl true
   def init(_init_arg) do
     Popcorn.Wasm.register(@process_name)
-    IO.puts("Hello from WASM!")
+		IO.puts("mode=#{@demo}")
 		state = %{count: 0, ticker: :stopped}
 
 		case @demo do
