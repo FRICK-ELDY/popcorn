@@ -71,7 +71,7 @@
         statusEl.className = ok ? "ok" : "err";
       }
       try {
-        const mod = await import("./wasm/popcorn.js");
+        const mod = await import("./wasm-ticker/popcorn.js");
         const Popcorn = mod.Popcorn ?? mod.default ?? mod;
         await Popcorn.init({
           onStdout: (s) => appendLog(s, false),
@@ -79,10 +79,6 @@
           timeoutMs: 20000
         });
         setStatus("ready", true);
-        // Try to trigger ticker on Elixir side (複数方式で数回トライ)
-        await tryTrigger(Popcorn, "start_ticker");
-        setTimeout(() => { tryTrigger(Popcorn, "start_ticker"); }, 200);
-        setTimeout(() => { tryTrigger(Popcorn, {cmd: "start_ticker"}); }, 500);
       } catch (err) {
         console.error("Popcorn initialization failed:", err);
         setStatus("failed to init", false);
@@ -93,22 +89,7 @@
         el.textContent += (isErr ? "[err] " : "") + line + "\n";
       }
 
-      async function tryTrigger(Popcorn, cmd) {
-        // Best-effort: try several interop shapes with簡易ログ
-        if (typeof Popcorn.send === "function") {
-          try { Popcorn.send("main", cmd); appendLog("[js] send main", false); } catch {}
-          try { Popcorn.send(":main", cmd); appendLog("[js] send :main", false); } catch {}
-        } else {
-          appendLog("[js] Popcorn.send not available", true);
-        }
-        if (typeof Popcorn.call === "function") {
-          try { await Popcorn.call("main", cmd); appendLog("[js] call main", false); } catch {}
-          try { await Popcorn.call(":main", cmd); appendLog("[js] call :main", false); } catch {}
-        }
-        if (typeof Popcorn.apply === "function") {
-          try { await Popcorn.apply("Elixir.PopcornDemo.Worker", "handle_info", [cmd, {}]); appendLog("[js] apply Worker.handle_info", false); } catch {}
-        }
-      }
+      // no explicit trigger needed; this build auto-starts ticker on init
     </script>
   </body>
   </html>

@@ -2,6 +2,7 @@ defmodule PopcornDemo.Worker do
   use GenServer
 
   @process_name :main
+	@demo Application.compile_env(:popcorn_demo, :demo, :home)
 
   def start_link(args) do
     GenServer.start_link(__MODULE__, args, name: @process_name)
@@ -12,7 +13,22 @@ defmodule PopcornDemo.Worker do
     Popcorn.Wasm.register(@process_name)
     IO.puts("Hello from WASM!")
 		state = %{count: 0, ticker: :stopped}
-		{:ok, state}
+
+		case @demo do
+			:home ->
+				{:ok, state}
+
+			:ticker ->
+				IO.puts("ticker started")
+				{:ok, %{state | ticker: :running}, 1_000}
+
+			:parallel ->
+				:ok = PopcornDemo.Parallel.run()
+				{:ok, state}
+
+			_ ->
+				{:ok, state}
+		end
   end
 
   @impl true

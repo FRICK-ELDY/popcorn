@@ -34,11 +34,20 @@ jobs:
       - name: Get deps
         run: mix deps.get
 
-      - name: Compile
-        run: mix compile
+      - name: Build Home (MIX_ENV=home)
+        run: |
+          MIX_ENV=home mix compile
+          MIX_ENV=home mix popcorn.cook
 
-      - name: Cook Popcorn (WASM artifacts to site/wasm)
-        run: mix popcorn.cook
+      - name: Build Ticker (MIX_ENV=ticker)
+        run: |
+          MIX_ENV=ticker mix compile
+          MIX_ENV=ticker mix popcorn.cook
+
+      - name: Build Parallel (MIX_ENV=parallel)
+        run: |
+          MIX_ENV=parallel mix compile
+          MIX_ENV=parallel mix popcorn.cook
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
