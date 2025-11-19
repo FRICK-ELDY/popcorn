@@ -79,8 +79,10 @@
           timeoutMs: 20000
         });
         setStatus("ready", true);
-        // Try to trigger parallel on Elixir side
-        tryTrigger(Popcorn, "start_parallel");
+        // Try to trigger parallel on Elixir side (複数方式で数回トライ)
+        await tryTrigger(Popcorn, "start_parallel");
+        setTimeout(() => { tryTrigger(Popcorn, "start_parallel"); }, 200);
+        setTimeout(() => { tryTrigger(Popcorn, {cmd: "start_parallel"}); }, 500);
       } catch (err) {
         console.error("Popcorn initialization failed:", err);
         setStatus("failed to init", false);
@@ -92,11 +94,19 @@
       }
 
       async function tryTrigger(Popcorn, cmd) {
-        try { if (typeof Popcorn.send === "function") Popcorn.send("main", cmd); } catch {}
-        try { if (typeof Popcorn.send === "function") Popcorn.send(":main", cmd); } catch {}
-        try { if (typeof Popcorn.call === "function") await Popcorn.call("main", cmd); } catch {}
-        try { if (typeof Popcorn.call === "function") await Popcorn.call(":main", cmd); } catch {}
-        try { if (typeof Popcorn.apply === "function") await Popcorn.apply("Elixir.PopcornDemo.Worker", "handle_info", [cmd, {}]); } catch {}
+        if (typeof Popcorn.send === "function") {
+          try { Popcorn.send("main", cmd); appendLog("[js] send main", false); } catch {}
+          try { Popcorn.send(":main", cmd); appendLog("[js] send :main", false); } catch {}
+        } else {
+          appendLog("[js] Popcorn.send not available", true);
+        }
+        if (typeof Popcorn.call === "function") {
+          try { await Popcorn.call("main", cmd); appendLog("[js] call main", false); } catch {}
+          try { await Popcorn.call(":main", cmd); appendLog("[js] call :main", false); } catch {}
+        }
+        if (typeof Popcorn.apply === "function") {
+          try { await Popcorn.apply("Elixir.PopcornDemo.Worker", "handle_info", [cmd, {}]); appendLog("[js] apply Worker.handle_info", false); } catch {}
+        }
       }
     </script>
   </body>

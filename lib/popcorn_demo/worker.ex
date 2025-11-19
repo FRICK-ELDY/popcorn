@@ -52,6 +52,13 @@ defmodule PopcornDemo.Worker do
 		:ok = PopcornDemo.Parallel.run()
 		{:noreply, state}
 	end
+
+	# fallback: 受信内容をそのままログ（送信到達確認用）
+	@impl true
+	def handle_info(msg, state) do
+		IO.puts("received message: #{inspect(msg)}")
+		{:noreply, state}
+	end
 end
 
 
