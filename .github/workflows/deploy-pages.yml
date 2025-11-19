@@ -39,6 +39,13 @@ jobs:
 
       - name: Cook Popcorn (WASM artifacts to site/wasm)
         run: mix popcorn.cook
+      
+      - name: List site artifacts
+        run: |
+          echo "::group::tree -a site"
+          ls -la site || true
+          ls -la site/wasm || true
+          echo "::endgroup::"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

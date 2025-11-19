@@ -9,8 +9,23 @@
     <h1>Popcorn (Elixir on WASM) - GitHub Pages Demo</h1>
     <p>ブラウザのコンソールを開いてログを確認してください。</p>
     <script type="module">
-      import { Popcorn } from "./wasm/popcorn.js";
-      await Popcorn.init({ onStdout: console.log });
+      window.addEventListener("unhandledrejection", (e) => {
+        console.error("Unhandled promise rejection:", e.reason || e);
+      });
+      console.log("Loading Popcorn module…");
+      try {
+        const mod = await import("./wasm/popcorn.js");
+        console.log("Popcorn module loaded:", Object.keys(mod));
+        const Popcorn = mod.Popcorn ?? mod.default ?? mod;
+        const result = await Popcorn.init({
+          onStdout: (s) => console.log("[WASM]", s),
+          onStderr: (s) => console.error("[WASM]", s),
+          timeoutMs: 20000
+        });
+        console.log("Popcorn.init result:", result);
+      } catch (err) {
+        console.error("Popcorn initialization failed:", err);
+      }
     </script>
   </body>
   </html>
