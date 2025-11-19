@@ -4,10 +4,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Popcorn on GitHub Pages</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" sizes="any">
+    <style>
+      :root { color-scheme: light dark; }
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; line-height: 1.6; }
+      h1 { margin-bottom: 8px; }
+      .row { display: grid; grid-template-columns: 1fr; gap: 16px; }
+      @media (min-width: 960px) { .row { grid-template-columns: 1fr 1fr; } }
+      textarea { width: 100%; min-height: 220px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; padding: 12px; border-radius: 8px; }
+      pre { background: color-mix(in oklab, Canvas, CanvasText 5%); padding: 12px; border-radius: 8px; min-height: 220px; overflow: auto; }
+      .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+      button, select { padding: 8px 12px; border-radius: 8px; }
+      .muted { opacity: .8; font-size: 0.9em; }
+      .logs { white-space: pre-wrap; }
+      .ok { color: #16a34a; }
+      .err { color: #dc2626; }
+    </style>
   </head>
   <body>
     <h1>Popcorn (Elixir on WASM) - GitHub Pages Demo</h1>
-    <p>ブラウザのコンソールを開いてログを確認してください。</p>
+    <p class="muted">Elixir Eval Demo 風の最小 REPL。例を選んで「Evaluate」で実行。</p>
+
+    <div class="toolbar">
+      <select id="example">
+        <option value="io">Example: IO.puts</option>
+        <option value="case">Example: case</option>
+        <option value="pipes">Example: pipes</option>
+      </select>
+      <button id="run">Evaluate (Ctrl+Enter)</button>
+      <span id="status" class="muted"></span>
+    </div>
+
+    <div class="row" style="margin-top:12px;">
+      <div>
+        <textarea id="code" spellcheck="false"></textarea>
+      </div>
+      <div>
+        <h3 style="margin:0 0 8px 0;">Results</h3>
+        <pre id="result"></pre>
+        <h3 style="margin:16px 0 8px 0;">Logs</h3>
+        <pre id="logs" class="logs"></pre>
+      </div>
+    </div>
+
     <script type="module">
       // Try to enable crossOriginIsolated via Service Worker (for SharedArrayBuffer, etc.)
       // Page will reload once after SW activation.
@@ -44,12 +82,70 @@
         const mod = await import("./wasm/popcorn.js");
         const Popcorn = mod.Popcorn ?? mod.default ?? mod;
         await Popcorn.init({
-          onStdout: (s) => console.log("[WASM]", s),
-          onStderr: (s) => console.error("[WASM]", s),
+          onStdout: (s) => appendLog(s, false),
+          onStderr: (s) => appendLog(s, true),
           timeoutMs: 20000
         });
+        setStatus("ready", true);
+
+        const codeEl = document.getElementById("code");
+        const exSel = document.getElementById("example");
+        const runBtn = document.getElementById("run");
+
+        const examples = {
+          io: `IO.puts("hello from Elixir")`,
+          case: `x = 42\ncase x do\n  41 -> :smaller\n  42 -> :answer\n  _ -> :bigger\nend`,
+          pipes: `"popcorn"\n|> String.upcase()\n|> String.reverse()`
+        };
+        function setExample(key) {
+          codeEl.value = examples[key] ?? examples.io;
+        }
+        exSel.addEventListener("change", () => setExample(exSel.value));
+        setExample(exSel.value);
+
+        async function evaluate() {
+          clearResult();
+          const code = codeEl.value;
+          if (typeof Popcorn.eval === "function") {
+            try {
+              const out = await Popcorn.eval(code);
+              setResult(String(out ?? ""));
+            } catch (err) {
+              setResult("ERROR: " + (err?.message || String(err)), true);
+            }
+          } else {
+            setResult("Dynamic evaluation is not supported in this Popcorn build.", true);
+          }
+        }
+        runBtn.addEventListener("click", evaluate);
+        window.addEventListener("keydown", (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+            e.preventDefault(); evaluate();
+          }
+        });
+
       } catch (err) {
         console.error("Popcorn initialization failed:", err);
+        setStatus("failed to init", false);
+      }
+
+      function setStatus(text, ok) {
+        const el = document.getElementById("status");
+        el.textContent = text;
+        el.className = ok ? "ok" : "err";
+      }
+      function appendLog(line, isErr) {
+        const el = document.getElementById("logs");
+        el.textContent += (isErr ? "[err] " : "") + line + "\n";
+      }
+      function clearResult() {
+        const res = document.getElementById("result");
+        res.textContent = "";
+      }
+      function setResult(text, isErr = false) {
+        const res = document.getElementById("result");
+        res.textContent = text;
+        res.className = isErr ? "err" : "";
       }
     </script>
   </body>
