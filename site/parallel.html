@@ -86,8 +86,11 @@
       }
 
       function appendLog(line, isErr) {
+        // filter: show only parallel logs (and errors)
+        if (!isErr && !line.startsWith("parallel ")) return;
         const el = document.getElementById("logs");
-        el.textContent += (isErr ? "[err] " : "") + line + "\n";
+        const text = isErr ? `[err] ${line}` : line;
+        el.textContent += text + "\n";
       }
 
       // no explicit trigger needed; this build auto-runs parallel on init

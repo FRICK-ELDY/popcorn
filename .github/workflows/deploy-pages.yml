@@ -34,26 +34,7 @@ jobs:
       - name: Get deps
         run: mix deps.get
 
-      - name: Build Home (MIX_ENV=home)
-        env:
-          MIX_ENV: home
-          POPCORN_DEMO: home
-        run: |
-          mix compile
-          mix popcorn.cook
-
-      - name: Build Ticker (MIX_ENV=ticker)
-        env:
-          MIX_ENV: ticker
-          POPCORN_DEMO: ticker
-        run: |
-          mix compile
-          mix popcorn.cook
-
-      - name: Build Parallel (MIX_ENV=parallel)
-        env:
-          MIX_ENV: parallel
-          POPCORN_DEMO: parallel
+      - name: Build site (single WASM)
         run: |
           mix compile
           mix popcorn.cook

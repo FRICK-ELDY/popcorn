@@ -87,6 +87,13 @@
       }
 
       function appendLog(line, isErr) {
+        // Home: show only hello + summary lines
+        if (!isErr) {
+          const allow =
+            line.startsWith("Hello from WASM!") ||
+            line.startsWith("mode=");
+          if (!allow) return;
+        }
         const el = document.getElementById("logs");
         el.textContent += (isErr ? "[err] " : "") + line + "\n";
       }
