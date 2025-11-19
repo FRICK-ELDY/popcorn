@@ -13,19 +13,17 @@ defmodule PopcornDemo.Parallel do
 
   @impl true
   def handle_info(:run, state) do
-    {micros, results} =
+    {micros, _} =
       :timer.tc(fn ->
-        [30, 31, 32]
-        |> Task.async_stream(&fib/1, timeout: 30_000)
-        |> Enum.map(fn {:ok, {n, v}} -> {n, v} end)
+        for n <- [30, 31, 32] do
+          {^n, v} = fib(n)
+          IO.puts("parallel fib(#{n}) = #{v}")
+        end
       end)
 
     ms = div(micros, 1000)
-    Enum.each(results, fn {n, v} ->
-      IO.puts("parallel fib(#{n}) = #{v}")
-    end)
     IO.puts("parallel done in #{ms} ms")
-    {:stop, :normal, state}
+    {:noreply, state}
   end
 
   defp fib(0), do: {0, 0}

@@ -11,21 +11,23 @@ defmodule PopcornDemo.Worker do
   def init(_init_arg) do
     Popcorn.Wasm.register(@process_name)
     IO.puts("Hello from WASM!")
-    {:ok, timer_ref} = :timer.send_interval(1_000, :tick)
-    state = %{count: 0, timer_ref: timer_ref}
+    # AtomVM 環境でも動くように :timer ではなく send_after を使用
+    _ref = Process.send_after(self(), :tick, 1_000)
+    IO.puts("ticker started")
+    state = %{count: 0}
     {:ok, state}
   end
 
   @impl true
-  def handle_info(:tick, %{count: count, timer_ref: ref} = state) do
+  def handle_info(:tick, %{count: count} = state) do
     new_count = count + 1
     IO.puts("ticker tick #{new_count}")
 
     if new_count >= 10 do
-      _ = :timer.cancel(ref)
       IO.puts("ticker done")
       {:noreply, %{state | count: new_count}}
     else
+      _ref = Process.send_after(self(), :tick, 1_000)
       {:noreply, %{state | count: new_count}}
     end
   end
