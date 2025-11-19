@@ -2,7 +2,10 @@ export async function ensureCOI() {
   if (!crossOriginIsolated && 'serviceWorker' in navigator) {
     try {
       const alreadyReloaded = sessionStorage.getItem('reloadedForCOOPCOEP') === '1';
-      await navigator.serviceWorker.register('./assets/service_worker.js', { scope: './' });
+      const parts = location.pathname.split('/').filter(Boolean);
+      const basePath = '/' + (parts.length ? (parts[0] + '/') : '');
+      const swUrl = `${basePath}assets/service_worker.js`;
+      await navigator.serviceWorker.register(swUrl, { scope: basePath });
       await navigator.serviceWorker.ready;
       if (!alreadyReloaded) {
         sessionStorage.setItem('reloadedForCOOPCOEP', '1');
