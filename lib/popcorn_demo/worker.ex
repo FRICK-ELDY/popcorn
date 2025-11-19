@@ -11,7 +11,6 @@ defmodule PopcornDemo.Worker do
   def init(_init_arg) do
     Popcorn.Wasm.register(@process_name)
     IO.puts("Hello from WASM!")
-    IO.puts("mode=single-build")
     IO.puts("[ticker] started")
     state = %{count: 0, ticker: :running}
     :ok = PopcornDemo.Parallel.run()

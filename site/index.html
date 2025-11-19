@@ -11,6 +11,7 @@
       .muted { opacity: .8; }
       .nav { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
       .nav a button { padding: 8px 12px; border-radius: 8px; }
+      pre { background: color-mix(in oklab, Canvas, CanvasText 5%); padding: 12px; border-radius: 8px; min-height: 180px; overflow: auto; }
     </style>
   </head>
   <body>
@@ -18,6 +19,7 @@
     <p class="muted">Home では Hello from WASM! のみ。各デモは専用ページで実行されます。<br>本家デモ: <a href="https://popcorn.swmansion.com/demos/eval/" target="_blank" rel="noopener">Elixir Eval Demo</a></p>
 
     <div class="nav">
+      <a href="./index.html"><button>Hello</button></a>
       <a href="./ticker.html"><button>Ticker</button></a>
       <a href="./parallel.html"><button>Parallel</button></a>
     </div>
@@ -87,13 +89,8 @@
       }
 
       function appendLog(line, isErr) {
-        // Home: show only hello + summary lines
-        if (!isErr) {
-          const allow =
-            line.startsWith("Hello from WASM!") ||
-            line.startsWith("mode=");
-          if (!allow) return;
-        }
+        // Home: show only "Hello from WASM!"
+        if (!isErr && !line.startsWith("Hello from WASM!")) return;
         const el = document.getElementById("logs");
         el.textContent += (isErr ? "[err] " : "") + line + "\n";
       }
