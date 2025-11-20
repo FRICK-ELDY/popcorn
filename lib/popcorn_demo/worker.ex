@@ -10,7 +10,15 @@ defmodule PopcornDemo.Worker do
 	@impl true
 	def init(_init_arg) do
 		Popcorn.Wasm.register(@process_name)
-		{:ok, %{}}
+		{:ok, %{}, {:continue, :after_init}}
+	end
+
+	@impl true
+	def handle_continue(:after_init, state) do
+		# 初期化が完了した直後に Hello と Parallel を実行
+		:ok = PopcornDemo.Hello.run()
+		:ok = PopcornDemo.Parallel.run()
+		{:noreply, state}
 	end
 
 	@impl true
