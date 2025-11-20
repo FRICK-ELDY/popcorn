@@ -40,13 +40,8 @@ export async function loadPopcorn(base) {
     return parts.length ? `/${parts[0]}/` : '/';
   };
   const root = getSiteRoot();
-  const normalizeBase = (b) => {
-    if (!b) return `${root}wasm`;
-    if (b.startsWith('/')) return b;
-    // make absolute under site root
-    return `${root}${b.replace(/^\.?\//, '')}`;
-  };
-  const absBase = normalizeBase(base);
+  // Always serve from site root /<repo>/wasm to avoid ../ resolution to /wasm
+  const absBase = `${root}wasm`;
   for (const f of candidates) {
     try {
       const baseClean = absBase.replace(/\/$/, '');
