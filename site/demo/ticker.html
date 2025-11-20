@@ -23,48 +23,12 @@
     </section>
 
     <script type="module">
-      import { startPopcorn } from "../assets/boot.js?v=3";
-      // Clear logs immediately on page load
-      document.getElementById("logs").textContent = "";
-
-      const statusEl = document.getElementById("status");
-      function setStatus(text, ok) {
-        statusEl.textContent = text;
-        statusEl.className = ok ? "ok" : "err";
-      }
-      try {
-        await startPopcorn({
-          base: "./wasm",
-          onStdout: (s) => appendLog(s, false),
-          onStderr: (s) => appendLog(s, true),
-          timeoutMs: 20000
-        });
-        setStatus("ready", true);
-      } catch (err) {
-        console.error("Popcorn initialization failed:", err);
-        setStatus("failed to init", false);
-        const msg = (err && err.message) ? err.message : String(err);
-        const el = document.getElementById("logs");
-        el.textContent += `[js err] ${msg}\n`;
-      }
-
-      function appendLog(line, isErr) {
-        // filter: show only ticker logs (and errors)
-        // Suppress known Emscripten/worker noise during init,
-        // but keep Aborted()/worker error lines visible.
-        if (isErr) {
-          const isWanted = line.includes("Aborted()") || line.includes("worker sent an error!");
-          if (!isWanted && /AtomVM\.mjs:.*Uncaught RuntimeError/.test(line)) {
-            return;
-          }
-        }
-        if (!isErr && !line.startsWith("[ticker]")) return;
-        const el = document.getElementById("logs");
-        const text = isErr ? `[err] ${line}` : line.replace(/^\[ticker\]\s?/, "");
-        el.textContent += text + "\n";
-      }
-
-      // no explicit trigger needed; this build auto-starts ticker on init
+      import { runDemo } from "../assets/demo.js";
+      await runDemo({
+        base: "./wasm",
+        filter: (line) => line.startsWith("[ticker]"),
+        transform: (line) => line.replace(/^\[ticker\]\s?/, "")
+      });
     </script>
   </body>
   </html>
