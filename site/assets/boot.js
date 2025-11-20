@@ -4,7 +4,7 @@ export async function ensureCOI() {
       const alreadyReloaded = sessionStorage.getItem('reloadedForCOOPCOEP') === '1';
       const parts = location.pathname.split('/').filter(Boolean);
       const basePath = '/' + (parts.length ? (parts[0] + '/') : '');
-      const swUrl = `${basePath}assets/service_worker.js`;
+      const swUrl = `${basePath}service_worker.js`;
       await navigator.serviceWorker.register(swUrl, { scope: basePath });
       await navigator.serviceWorker.ready;
       if (!alreadyReloaded) {
