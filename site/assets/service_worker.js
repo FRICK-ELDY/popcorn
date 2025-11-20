@@ -11,27 +11,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   event.respondWith((async () => {
-    let requestToFetch = req;
-    try {
-      const url = new URL(req.url);
-      // If runtime tries to load from /wasm/... (site root), rewrite to /demo/wasm/...
-      if (url.pathname.includes("/wasm/") && !url.pathname.includes("/demo/wasm/")) {
-        url.pathname = url.pathname.replace("/wasm/", "/demo/wasm/");
-        requestToFetch = new Request(url.toString(), {
-          method: req.method,
-          headers: req.headers,
-          mode: req.mode,
-          credentials: req.credentials,
-          cache: req.cache,
-          redirect: req.redirect,
-          referrer: req.referrer,
-          referrerPolicy: req.referrerPolicy,
-          integrity: req.integrity
-        });
-      }
-    } catch (_) {}
-
-    const upstreamRes = await fetch(requestToFetch);
+    const upstreamRes = await fetch(req);
     const newHeaders = new Headers(upstreamRes.headers);
     newHeaders.set("Cross-Origin-Opener-Policy", "same-origin");
     newHeaders.set("Cross-Origin-Embedder-Policy", "require-corp");

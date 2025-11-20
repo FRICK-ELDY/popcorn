@@ -35,19 +35,10 @@ export function installWasmFallback() {
 export async function loadPopcorn(base) {
   const candidates = ['popcorn.js', 'popcorn.mjs', 'index.js', 'index.mjs', 'popcorn_iframe.js'];
   let lastErr = null;
-  const getSiteRoot = () => {
-    const parts = location.pathname.split('/').filter(Boolean);
-    return parts.length ? `/${parts[0]}/` : '/';
-  };
-  const root = getSiteRoot();
-  const isDemo = location.pathname.includes('/demo/');
-  // If page is under /demo/, prefer ./wasm (=> /<repo>/demo/wasm)
-  // Otherwise (e.g. landing), still point to demo/wasm
-  const defaultBase = isDemo ? './wasm' : `${root}demo/wasm`;
   for (const f of candidates) {
     try {
       // Resolve against the PAGE url to allow demo-relative bases like "./wasm"
-      const baseClean = (base || defaultBase).replace(/\/$/, '');
+      const baseClean = (base || './wasm').replace(/\/$/, '');
       const url = new URL(`${baseClean}/${f}`, document.baseURI).href;
       const mod = await import(url);
       const entry = mod.Popcorn ?? mod.default ?? mod;
