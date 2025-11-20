@@ -50,9 +50,13 @@
 
       function appendLog(line, isErr) {
         // filter: show only ticker logs (and errors)
-        // Suppress known Emscripten/worker noise during init
-        if (isErr && (line.includes("Aborted()") || line.includes("worker sent an error!") || /AtomVM\.mjs:.*Uncaught RuntimeError/.test(line))) {
-          return;
+        // Suppress known Emscripten/worker noise during init,
+        // but keep Aborted()/worker error lines visible.
+        if (isErr) {
+          const isWanted = line.includes("Aborted()") || line.includes("worker sent an error!");
+          if (!isWanted && /AtomVM\.mjs:.*Uncaught RuntimeError/.test(line)) {
+            return;
+          }
         }
         if (!isErr && !line.startsWith("[ticker]")) return;
         const el = document.getElementById("logs");

@@ -1,16 +1,6 @@
 defmodule PopcornDemo.Parallel do
 	@moduledoc false
 
-	def child_spec(_arg) do
-		%{
-			id: __MODULE__,
-			start: {Task, :start_link, [fn -> run() end]},
-			restart: :temporary,
-			shutdown: 5_000,
-			type: :worker
-		}
-	end
-
 	def run do
 		start_ms = System.monotonic_time(:millisecond)
 		for n <- [30, 31, 32] do

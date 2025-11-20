@@ -15,7 +15,6 @@ defmodule PopcornDemo.Worker do
 
 	@impl true
 	def handle_continue(:after_init, state) do
-		# 初期化が完了した直後に Hello と Parallel を実行
 		:ok = PopcornDemo.Hello.run()
 		:ok = PopcornDemo.Parallel.run()
 		{:noreply, state}
