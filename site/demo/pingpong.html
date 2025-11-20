@@ -1,0 +1,37 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PingPong - Popcorn Demo</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" sizes="any">
+    <link rel="stylesheet" href="../assets/style.css">
+  </head>
+  <body>
+    <h1>PingPong</h1>
+    <p class="muted">Elixir の 2 プロセスがメッセージを往復し、10 ラウンドで終了します。</p>
+
+    <div class="nav">
+      <a href="./hello.html"><button>Hello</button></a>
+      <a href="./ticker.html"><button>Ticker</button></a>
+      <a href="./parallel.html"><button>Parallel</button></a>
+      <a href="./pingpong.html"><button>PingPong</button></a>
+      <span id="status" class="muted"></span>
+    </div>
+
+    <section id="logs-pane">
+      <h3>Logs</h3>
+      <pre id="logs"></pre>
+    </section>
+
+    <script type="module">
+      import { runDemo } from "../assets/demo.js";
+      await runDemo({
+        base: "./wasm",
+        filter: (line) => line.startsWith("[pingpong]"),
+        transform: (line) => line.replace(/^\[pingpong\]\s?/, "")
+      });
+    </script>
+  </body>
+  </html>
+
+

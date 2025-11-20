@@ -17,6 +17,7 @@ defmodule PopcornDemo.Worker do
 	def handle_continue(:after_init, state) do
 		:ok = PopcornDemo.Hello.run()
 		:ok = PopcornDemo.Parallel.run()
+		:ok = PopcornDemo.PingPong.run()
 		{:noreply, state}
 	end
 
