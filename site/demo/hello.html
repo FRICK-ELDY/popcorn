@@ -49,6 +49,10 @@
       }
 
       function appendLog(line, isErr) {
+        // Known Emscripten/worker noise during init on some hosts: suppress
+        if (isErr && (line.includes("Aborted()") || line.includes("worker sent an error!") || /AtomVM\.mjs:.*Uncaught RuntimeError/.test(line))) {
+          return;
+        }
         if (!isErr && !line.startsWith("Hello from WASM!")) return;
         const el = document.getElementById("logs");
         el.textContent += (isErr ? "[err] " : "") + line + "\n";

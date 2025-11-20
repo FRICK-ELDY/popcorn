@@ -50,6 +50,10 @@
 
       function appendLog(line, isErr) {
         // filter: show only parallel logs (and errors)
+        // Suppress known Emscripten/worker noise during init
+        if (isErr && (line.includes("Aborted()") || line.includes("worker sent an error!") || /AtomVM\.mjs:.*Uncaught RuntimeError/.test(line))) {
+          return;
+        }
         if (!isErr && !line.startsWith("parallel ")) return;
         const el = document.getElementById("logs");
         const text = isErr ? `[err] ${line}` : line;
