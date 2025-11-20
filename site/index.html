@@ -18,31 +18,14 @@
 
     <section id="logs-pane">
       <h3>Logs</h3>
-      <pre id="logs"></pre>
+      <pre id="logs">Open any demo from above.
+- Ticker: 1s x 10 logs
+- Parallel: fib(30..32) once
+</pre>
     </section>
 
     <script type="module">
-      import { startPopcorn } from "./assets/boot.js";
-      document.getElementById("logs").textContent = "";
-
-      try {
-        await startPopcorn({
-          base: "./wasm",
-          onStdout: (s) => appendLog(s, false),
-          onStderr: (s) => appendLog(s, true),
-          timeoutMs: 20000
-        });
-      } catch (err) {
-        console.error("Popcorn initialization failed:", err);
-        appendLog(`[js err] ${err?.message || err}`, true);
-      }
-
-      function appendLog(line, isErr) {
-        // Hello page: show only "Hello from WASM!"
-        if (!isErr && !line.startsWith("Hello from WASM!")) return;
-        const el = document.getElementById("logs");
-        el.textContent += (isErr ? "[err] " : "") + line + "\n";
-      }
+      // Landing: no Popcorn init here. Demos initialize themselves.
     </script>
   </body>
   </html>

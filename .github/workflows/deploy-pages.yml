@@ -42,6 +42,15 @@ jobs:
           ls -la site/wasm || true
           echo "::endgroup::"
 
+      - name: Duplicate wasm for demo pages
+        run: |
+          mkdir -p site/demo
+          rm -rf site/demo/wasm
+          cp -r site/wasm site/demo/wasm
+          echo "::group::site/demo/wasm contents"
+          ls -la site/demo/wasm || true
+          echo "::endgroup::"
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

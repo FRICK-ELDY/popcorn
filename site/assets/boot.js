@@ -40,12 +40,11 @@ export async function loadPopcorn(base) {
     return parts.length ? `/${parts[0]}/` : '/';
   };
   const root = getSiteRoot();
-  // Always serve from site root /<repo>/wasm to avoid ../ resolution to /wasm
-  const absBase = `${root}wasm`;
   for (const f of candidates) {
     try {
-      const baseClean = absBase.replace(/\/$/, '');
-      const url = new URL(`${baseClean}/${f}`, location.origin).href;
+      // Resolve against the PAGE url to allow demo-relative bases like "./wasm"
+      const baseClean = (base || './wasm').replace(/\/$/, '');
+      const url = new URL(`${baseClean}/${f}`, document.baseURI).href;
       const mod = await import(url);
       const entry = mod.Popcorn ?? mod.default ?? mod;
       const hasInit = entry && typeof entry.init === 'function';
@@ -56,7 +55,7 @@ export async function loadPopcorn(base) {
       }
       lastErr = new Error(`Module ${f} loaded but no init function found`);
     } catch (e) {
-      console.debug(`[boot] failed to import ${f} from base ${absBase}`, e);
+      console.debug(`[boot] failed to import ${f} from base ${base}`, e);
       lastErr = e;
     }
   }
