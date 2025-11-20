@@ -35,11 +35,22 @@ export function installWasmFallback() {
 export async function loadPopcorn(base) {
   const candidates = ['popcorn.js', 'popcorn.mjs', 'index.js', 'index.mjs', 'popcorn_iframe.js'];
   let lastErr = null;
+  const getSiteRoot = () => {
+    const parts = location.pathname.split('/').filter(Boolean);
+    return parts.length ? `/${parts[0]}/` : '/';
+  };
+  const root = getSiteRoot();
+  const normalizeBase = (b) => {
+    if (!b) return `${root}wasm`;
+    if (b.startsWith('/')) return b;
+    // make absolute under site root
+    return `${root}${b.replace(/^\.?\//, '')}`;
+  };
+  const absBase = normalizeBase(base);
   for (const f of candidates) {
     try {
-      // Resolve against the page URL (not this module's URL) to avoid ./assets/wasm/... resolution
-      const baseClean = (base || './wasm').replace(/\/$/, '');
-      const url = new URL(`${baseClean}/${f}`, document.baseURI).href;
+      const baseClean = absBase.replace(/\/$/, '');
+      const url = new URL(`${baseClean}/${f}`, location.origin).href;
       const mod = await import(url);
       const entry = mod.Popcorn ?? mod.default ?? mod;
       const hasInit = entry && typeof entry.init === 'function';
@@ -50,7 +61,7 @@ export async function loadPopcorn(base) {
       }
       lastErr = new Error(`Module ${f} loaded but no init function found`);
     } catch (e) {
-      console.debug(`[boot] failed to import ${f} from base ${base}`, e);
+      console.debug(`[boot] failed to import ${f} from base ${absBase}`, e);
       lastErr = e;
     }
   }
