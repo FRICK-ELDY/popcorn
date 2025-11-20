@@ -10,21 +10,21 @@
     <h1>Popcorn (Elixir on WASM) - GitHub Pages Demo</h1>
     <p class="muted">各デモは専用ページで実行されます。</p>
 
-    <div class="nav">
-      <a href="./demo/hello.html"><button>Hello</button></a>
-      <a href="./demo/ticker.html"><button>Ticker</button></a>
-      <a href="./demo/parallel.html"><button>Parallel</button></a>
-      <a href="./demo/pingpong.html"><button>PingPong</button></a>
-    </div>
+    <div class="nav"></div>
 
     <section id="logs-pane">
       <h3>Logs</h3>
       <pre id="logs">Open any demo from above.
-- Ticker: 1s x 10 logs
-- Parallel: fib(30..32) once
-- PingPong: ping/pong x 10 rounds
-</pre>
+      - Ticker: 1s x 10 logs
+      - Parallel: fib(30..32) once
+      - PingPong: ping/pong x 10 rounds
+      </pre>
     </section>
+
+    <script type="module">
+      import { injectNav } from "./assets/nav.js";
+      injectNav();
+    </script>
   </body>
   </html>
 

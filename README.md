@@ -45,11 +45,13 @@ end
 
 3) デモページを作る
 
-`site/demo/your_demo.html` を追加し、共通ユーティリティ `runDemo` を使って必要なログだけを表示します。
+`site/demo/your_demo.html` を追加し、共通ユーティリティ `runDemo` を使って必要なログだけを表示します。ナビは `injectNav()` で自動挿入します。
 
 ```html
 <script type="module">
   import { runDemo } from "../assets/demo.js";
+  import { injectNav } from "../assets/nav.js";
+  injectNav();
   await runDemo({
     base: "./wasm",
     filter: (line) => line.startsWith("[yourdemo]"),
@@ -62,6 +64,37 @@ end
 
 - `site/index.html` のリンクに追加
 - 必要なら各デモページの `<div class="nav">` にもボタンを追加
+
+## 共通フロントエンドユーティリティ
+
+- `site/assets/demo.js`
+  - `runDemo({ base, filter, transform, statusId, logsId, timeoutMs })`
+  - `filter(line)`: 表示する行の判定
+  - `transform(line)`: 表示前に整形（例: 接頭辞の除去）
+  - 既知の初期化ノイズ（`AtomVM.mjs: ... Uncaught RuntimeError`）は抑制。`Aborted()`/`worker sent an error!` は表示
+
+- `site/assets/nav.js`
+  - `injectNav()`: 各ページの `<div class="nav"></div>` に共通ナビ（Hello/Ticker/Parallel/PingPong と `#status`）を挿入
+
+### ページ雛形（最小）
+
+```html
+<div class="nav"></div>
+<section id="logs-pane">
+  <h3>Logs</h3>
+  <pre id="logs"></pre>
+</section>
+<script type="module">
+  import { injectNav } from "../assets/nav.js";
+  import { runDemo } from "../assets/demo.js";
+  injectNav();
+  await runDemo({
+    base: "./wasm",
+    filter: (line) => line.startsWith("[yourdemo]"),
+    transform: (line) => line.replace(/^\[yourdemo\]\s?/, "")
+  });
+</script>
+```
 
 ## 表示ログのポリシー
 - ページは `site/assets/demo.js` の `runDemo` でログを集約・表示します。

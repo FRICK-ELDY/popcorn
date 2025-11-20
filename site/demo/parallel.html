@@ -10,12 +10,7 @@
     <h1>Parallel</h1>
     <p class="muted">Elixir 側で fib(30..32) を計算して結果を出力します。</p>
 
-    <div class="nav">
-      <a href="./hello.html"><button>Hello</button></a>
-      <a href="./ticker.html"><button>Ticker</button></a>
-      <a href="./parallel.html"><button>Parallel</button></a>
-      <span id="status" class="muted"></span>
-    </div>
+    <div class="nav"></div>
 
     <section id="logs-pane">
       <h3>Logs</h3>
@@ -24,6 +19,8 @@
 
     <script type="module">
       import { runDemo } from "../assets/demo.js";
+      import { injectNav } from "../assets/nav.js";
+      injectNav();
       await runDemo({
         base: "./wasm",
         filter: (line) => line.startsWith("parallel ")
