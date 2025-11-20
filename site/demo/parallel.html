@@ -34,7 +34,7 @@
       }
       try {
         await startPopcorn({
-          base: "../wasm",
+          base: "./wasm",
           onStdout: (s) => appendLog(s, false),
           onStderr: (s) => appendLog(s, true),
           timeoutMs: 20000
