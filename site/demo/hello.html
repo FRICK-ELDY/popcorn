@@ -2,13 +2,13 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Parallel - Popcorn Demo</title>
+    <title>Hello - Popcorn Demo</title>
     <link rel="icon" href="../favicon.svg" type="image/svg+xml" sizes="any">
     <link rel="stylesheet" href="../assets/style.css">
   </head>
   <body>
-    <h1>Parallel</h1>
-    <p class="muted">Elixir 側で fib(30..32) を計算して結果を出力します。</p>
+    <h1>Hello</h1>
+    <p class="muted">Hello from WASM! のみを表示します。</p>
 
     <div class="nav">
       <a href="./hello.html"><button>Hello</button></a>
@@ -24,7 +24,6 @@
 
     <script type="module">
       import { startPopcorn } from "../assets/boot.js";
-      // Clear logs immediately on page load
       document.getElementById("logs").textContent = "";
 
       const statusEl = document.getElementById("status");
@@ -32,9 +31,10 @@
         statusEl.textContent = text;
         statusEl.className = ok ? "ok" : "err";
       }
+
       try {
         await startPopcorn({
-          base: "../wasm",
+          base: "./wasm",
           onStdout: (s) => appendLog(s, false),
           onStderr: (s) => appendLog(s, true),
           timeoutMs: 20000
@@ -49,14 +49,10 @@
       }
 
       function appendLog(line, isErr) {
-        // filter: show only parallel logs (and errors)
-        if (!isErr && !line.startsWith("parallel ")) return;
+        if (!isErr && !line.startsWith("Hello from WASM!")) return;
         const el = document.getElementById("logs");
-        const text = isErr ? `[err] ${line}` : line;
-        el.textContent += text + "\n";
+        el.textContent += (isErr ? "[err] " : "") + line + "\n";
       }
-
-      // no explicit trigger needed; this build auto-runs parallel on init
     </script>
   </body>
   </html>

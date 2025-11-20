@@ -38,18 +38,11 @@ jobs:
         run: |
           mix compile
           mix popcorn.cook
-          echo "::group::site/wasm contents"
-          ls -la site/wasm || true
-          echo "::endgroup::"
-
-      - name: Duplicate wasm for demo pages
-        run: |
-          mkdir -p site/demo
-          rm -rf site/demo/wasm
-          cp -r site/wasm site/demo/wasm
           echo "::group::site/demo/wasm contents"
           ls -la site/demo/wasm || true
           echo "::endgroup::"
+
+      # 直接 site/demo/wasm に出力するため移動は不要
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
