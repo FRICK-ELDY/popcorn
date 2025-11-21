@@ -3,7 +3,7 @@ defmodule PopcornDemo.MonteCarloPi do
 
 	import Bitwise
 
-	@default_trials 200_000
+	@default_trials 500_000
 	@default_workers 8
 	@modulus 0x1_0000_0000
 

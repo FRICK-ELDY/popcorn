@@ -8,21 +8,9 @@
   </head>
   <body>
     <h1>MonteCarlo Pi</h1>
-    <p class="muted">乱数で円内点の比率から π を推定します。Elixir 側でアクター（軽量プロセス）を並行実行します。</p>
+    <p class="muted">乱数で円内点の比率から π を推定します。Elixir 側で並列試行します。</p>
 
     <div class="nav"></div>
-
-    <section>
-      <h3>Controls</h3>
-      <div class="row">
-        <label for="trials">Trials</label>
-        <input id="trials" type="number" value="200000" min="1" step="1000">
-        <label for="workers">Actors</label>
-        <input id="workers" type="number" value="8" min="1" step="1">
-        <button id="start">Start</button>
-      </div>
-      <p class="muted" id="ui-hint"></p>
-    </section>
 
     <section id="logs-pane">
       <h3>Logs</h3>
@@ -33,57 +21,10 @@
       import { runDemo } from "../assets/demo.js";
       import { injectNav } from "../assets/nav.js";
       injectNav();
-
-      const entry = await runDemo({
+      await runDemo({
         base: "./wasm",
         filter: (line) => line.startsWith("[pi]"),
         transform: (line) => line.replace(/^\[pi\]\s?/, "")
-      });
-
-      const logsEl = document.getElementById("logs");
-      const uiHint = document.getElementById("ui-hint");
-      const $ = (id) => document.getElementById(id);
-      function uiLog(s) { if (logsEl) logsEl.textContent += `[ui] ${s}\n`; }
-
-      function detectApi(entry) {
-        if (!entry) return null;
-        const hasOwnCallable = (obj, name) =>
-          Object.prototype.hasOwnProperty.call(obj, name) && typeof obj[name] === "function";
-        // Prefer an explicit messaging API if provided by the runtime
-        if (hasOwnCallable(entry, "send")) return { kind: "send", fn: entry.send.bind(entry) };
-        // Avoid treating Function.prototype.call/apply as runtime APIs
-        if (hasOwnCallable(entry, "invoke")) return { kind: "invoke", fn: entry.invoke.bind(entry) };
-        if (hasOwnCallable(entry, "call")) return { kind: "call", fn: entry.call.bind(entry) };
-        if (hasOwnCallable(entry, "apply")) return { kind: "apply", fn: entry.apply.bind(entry) };
-        return null;
-      }
-
-      const api = detectApi(entry);
-      if (!api) {
-        uiHint.textContent = "この環境ではJS→Elixir直接呼び出しAPIが見つかりません（手動Runのみ）。";
-      } else {
-        uiHint.textContent = `JS→Elixir呼び出しAPI: ${api.kind}`;
-      }
-
-      $("start").addEventListener("click", async () => {
-        const trials = parseInt($("trials").value, 10) || 200000;
-        const workers = parseInt($("workers").value, 10) || 8;
-        if (!api) {
-          uiLog("呼び出しAPIが見つかりませんでした。");
-          return;
-        }
-        try {
-          if (api.kind === "send") {
-            await api.fn({ to: ":main", mod: "Elixir.PopcornDemo.MonteCarloPi", fun: "run", args: [trials, workers] });
-          } else if (api.kind === "call" || api.kind === "apply" || api.kind === "invoke") {
-            // Fallbacks only if the runtime explicitly exposes own methods
-            await api.fn("Elixir.PopcornDemo.MonteCarloPi", "run", [trials, workers]);
-          } else {
-            uiLog("未知のAPIです。");
-          }
-        } catch (e) {
-          uiLog(`実行エラー: ${e && e.message ? e.message : e}`);
-        }
       });
     </script>
   </body>
