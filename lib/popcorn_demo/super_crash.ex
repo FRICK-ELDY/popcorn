@@ -3,12 +3,18 @@ defmodule PopcornDemo.SuperCrash do
 
 	@max_restarts 5
 
-	def run(max \\ @max_restarts, interval_ms \\ @interval_ms) when max >= 0 and interval_ms > 0 do
+	def run(max \\ @max_restarts) when max >= 0 do
 		start_ms = System.monotonic_time(:millisecond)
 		IO.puts("[sup] supervisor starting (max=#{max})")
-		setup_ets(max, start_ms)
 
 		children = [
+			%{
+				id: __MODULE__.Counter,
+				start: {__MODULE__.Counter, :start_link, [%{max: max, start_ms: start_ms}]},
+				restart: :permanent,
+				shutdown: 2_000,
+				type: :worker
+			},
 			%{
 				id: __MODULE__.Crashy,
 				start: {__MODULE__.Crashy, :start_link, [%{}]},
@@ -27,14 +33,21 @@ defmodule PopcornDemo.SuperCrash do
 		:ok
 	end
 
-	defp setup_ets(max, start_ms) do
-		case :ets.whereis(:sup_demo) do
-			:undefined -> :ets.new(:sup_demo, [:named_table, :public])
-			_ -> :ok
+	defmodule Counter do
+		use GenServer
+
+		def start_link(%{max: max, start_ms: start_ms}) do
+			GenServer.start_link(__MODULE__, %{max: max, start_ms: start_ms, attempt: 0}, name: __MODULE__)
 		end
-		:ets.insert(:sup_demo, {:restarts, 0})
-		:ets.insert(:sup_demo, {:max, max})
-		:ets.insert(:sup_demo, {:start_ms, start_ms})
+
+		@impl true
+		def init(state), do: {:ok, state}
+
+		@impl true
+		def handle_call(:next, _from, %{attempt: a} = state) do
+			new_attempt = a + 1
+			{:reply, {new_attempt, state.start_ms, state.max}, %{state | attempt: new_attempt}}
+		end
 	end
 
 	defmodule Crashy do
@@ -44,17 +57,7 @@ defmodule PopcornDemo.SuperCrash do
 
 		@impl true
 		def init(_args) do
-			attempt = :ets.update_counter(:sup_demo, :restarts, {2, 1}, {:restarts, 0})
-			start_ms =
-				case :ets.lookup(:sup_demo, :start_ms) do
-					[{:start_ms, v}] -> v
-					_ -> System.monotonic_time(:millisecond)
-				end
-			max =
-				case :ets.lookup(:sup_demo, :max) do
-					[{:max, v}] -> v
-					_ -> 0
-				end
+			{attempt, start_ms, max} = GenServer.call(PopcornDemo.SuperCrash.Counter, :next)
 			IO.puts("[sup] worker started")
 			IO.puts("[sup] crashing (#{attempt}/#{max})")
 			state = %{attempt: attempt, max: max, start_ms: start_ms}
