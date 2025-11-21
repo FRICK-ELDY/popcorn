@@ -12,7 +12,13 @@ defmodule PopcornDemo.SuperCrash do
 		{:ok, _} = ensure_counter(%{max: max, start_ms: start_ms})
 
 		children = [
-			{__MODULE__.Crashy, %{interval_ms: interval_ms}}
+			%{
+				id: __MODULE__.Crashy,
+				start: {__MODULE__.Crashy, :start_link, [%{interval_ms: interval_ms}]},
+				restart: :permanent,
+				shutdown: 2_000,
+				type: :worker
+			}
 		]
 
 		{:ok, _sup} =
@@ -27,7 +33,7 @@ defmodule PopcornDemo.SuperCrash do
 	defp ensure_counter(%{max: max, start_ms: start_ms}) do
 		case Process.whereis(@counter_name) do
 			nil ->
-				GenServer.start_link(__MODULE__.Counter, %{max: max, start_ms: start_ms, count: 0}, name: @counter_name)
+				GenServer.start(__MODULE__.Counter, %{max: max, start_ms: start_ms, count: 0}, name: @counter_name)
 			pid when is_pid(pid) ->
 				GenServer.call(@counter_name, {:reset, max, start_ms})
 				{:ok, pid}
