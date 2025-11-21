@@ -16,44 +16,47 @@ defmodule PopcornDemo.MonteCarloPi do
 		trials_per = div(trials, workers)
 		remainder = rem(trials, workers)
 		base_seed = System.monotonic_time(:millisecond) &&& 0xFFFF_FFFF
-		IO.puts("[pi dbg] split per=#{trials_per} rem=#{remainder} base_seed=#{base_seed}")
 
 		for idx <- 0..(workers - 1) do
 			seed = mix_seed(base_seed, idx)
 			n = trials_per + if(idx < remainder, do: 1, else: 0)
-			IO.puts("[pi dbg] spawn idx=#{idx} n=#{n} seed=#{seed}")
-			pid =
-				spawn_link(fn ->
-					send(parent, {:pi_hits, idx, hits_for(n, seed)})
-				end)
-			_process_ref = Process.monitor(pid)
+			spawn_link(fn ->
+				send(parent, {:pi_hits, hits_for(n, seed)})
+			end)
 		end
 
-		total_hits = collect(workers, 0)
+		total_hits = collect_hits(workers, 0)
 		pi = 4.0 * total_hits / trials
 		ms = System.monotonic_time(:millisecond) - start_ms
 		pi_str = :io_lib.format('~.6f', [pi]) |> IO.iodata_to_binary()
 		IO.puts("[pi] pi ≈ #{pi_str} (#{total_hits}/#{trials})")
+
+		ideal = :math.pi()
+		err = abs(pi - ideal)
+		p = ideal / 4.0
+		sigma1 = 4.0 * :math.sqrt(p * (1.0 - p) / trials)
+		z = if sigma1 > 0.0, do: err / sigma1, else: 0.0
+		s1_str = :io_lib.format('~.4f', [sigma1]) |> IO.iodata_to_binary()
+		s2_str = :io_lib.format('~.4f', [2.0 * sigma1]) |> IO.iodata_to_binary()
+		err_str = :io_lib.format('~.6f', [err]) |> IO.iodata_to_binary()
+		z_str = :io_lib.format('~.2f', [z]) |> IO.iodata_to_binary()
+		status =
+			cond do
+				z <= 1.0 -> "OK (≤1σ)"
+				z <= 2.0 -> "OK (≤2σ)"
+				true -> "WARN (>2σ)"
+			end
+		IO.puts("[pi] expected error 1σ≈#{s1_str}, 2σ≈#{s2_str}")
+		IO.puts("[pi] observed error=#{err_str} (#{z_str}σ) #{status}")
+
 		IO.puts("[pi] done in #{ms} ms")
 		:ok
 	end
 
-	defp collect(0, acc), do: acc
-	defp collect(n, acc) do
+	defp collect_hits(0, acc), do: acc
+	defp collect_hits(n, acc) do
 		receive do
-			{:pi_hits, idx, k} ->
-				IO.puts("[pi dbg] recv idx=#{idx} hits=#{k}")
-				collect(n - 1, acc + k)
-			{:DOWN, _ref, :process, pid, reason} ->
-				IO.puts("[pi dbg] DOWN pid=#{inspect(pid)} reason=#{inspect(reason)}")
-				collect(n, acc)
-			other ->
-				IO.puts("[pi dbg] other msg=#{inspect(other)}")
-				collect(n, acc)
-		after
-			10_000 ->
-				IO.puts("[pi dbg] timeout waiting (remaining=#{n})")
-				acc
+			{:pi_hits, k} -> collect_hits(n - 1, acc + k)
 		end
 	end
 
