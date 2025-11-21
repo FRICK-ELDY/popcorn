@@ -9,35 +9,48 @@ defmodule PopcornDemo.SuperCrash do
 	def run(max \\ @max_restarts, interval_ms \\ @interval_ms) when max >= 0 and interval_ms > 0 do
 		start_ms = System.monotonic_time(:millisecond)
 		IO.puts("[sup] supervisor starting (max=#{max})")
-		IO.puts("[sup dbg] ensure_counter begin")
-		{:ok, _} = ensure_counter(%{max: max, start_ms: start_ms})
-		IO.puts("[sup dbg] ensure_counter ok")
-
-		children = [
-			%{
-				id: @crashy_name,
-				start: {@crashy_name, :start_link, [%{interval_ms: interval_ms}]},
-				restart: :permanent,
-				shutdown: 2_000,
-				type: :worker
-			},
-			%{
-				id: __MODULE__.Watcher,
-				start: {__MODULE__.Watcher, :start_link, [[:ok]]},
-				restart: :permanent,
-				shutdown: 2_000,
-				type: :worker
-			}
-		]
-
-		{:ok, sup} =
-			Supervisor.start_link(children,
-				strategy: :one_for_one,
-				max_restarts: max + 2,
-				max_seconds: 2
-			)
-		IO.puts("[sup dbg] supervisor started pid=#{inspect(sup)}")
+		{:ok, mgr} = GenServer.start_link(__MODULE__.Manager, %{max: max, start_ms: start_ms})
+		IO.puts("[sup dbg] manager started pid=#{inspect(mgr)}")
+		GenServer.cast(mgr, :start)
 		:ok
+	end
+
+	defmodule Manager do
+		use GenServer
+
+		def start_link(args), do: GenServer.start_link(__MODULE__, args)
+
+		@impl true
+		def init(%{max: max, start_ms: start_ms}) do
+			IO.puts("[sup dbg] manager.init max=#{max} start_ms=#{start_ms}")
+			{:ok, %{max: max, start_ms: start_ms, attempt: 0, child: nil, ref: nil}}
+		end
+
+		@impl true
+		def handle_cast(:start, %{attempt: attempt, max: max} = state) do
+			next = attempt + 1
+			if next <= max do
+				IO.puts("[sup dbg] manager.start_child attempt=#{next}")
+				{:ok, pid} = PopcornDemo.SuperCrash.Crashy.start_link(%{attempt: next, max: max, start_ms: state.start_ms})
+				ref = Process.monitor(pid)
+				{:noreply, %{state | attempt: next, child: pid, ref: ref}}
+			else
+				ms = System.monotonic_time(:millisecond) - state.start_ms
+				IO.puts("[sup] recovered after #{max} restarts")
+				IO.puts("[sup] done in #{ms} ms")
+				{:noreply, state}
+			end
+		end
+
+		@impl true
+		def handle_info({:DOWN, ref, :process, pid, reason}, %{ref: ref} = state) do
+			IO.puts("[sup dbg] manager.down pid=#{inspect(pid)} reason=#{inspect(reason)}")
+			GenServer.cast(self(), :start)
+			{:noreply, %{state | child: nil, ref: nil}}
+		end
+
+		@impl true
+		def handle_info(_msg, state), do: {:noreply, state}
 	end
 
 	defp ensure_counter(%{max: max, start_ms: start_ms}) do
@@ -87,32 +100,23 @@ defmodule PopcornDemo.SuperCrash do
 		@counter PopcornDemo.SuperCrash.Counter
 		@name PopcornDemo.SuperCrash.Crashy
 
-		def start_link(args), do: GenServer.start_link(__MODULE__, args, name: @name)
+		def start_link(args), do: GenServer.start_link(__MODULE__, args)
 
 		@impl true
-		def init(%{interval_ms: t}) do
-			{attempt, start_ms, max} = GenServer.call(@counter, :next)
+		def init(%{attempt: attempt, max: max, start_ms: start_ms}) do
 			IO.puts("[sup] worker started")
+			IO.puts("[sup] crashing (#{attempt}/#{max})")
 			IO.puts("[sup dbg] crashy.init attempt=#{attempt} max=#{max} start_ms=#{start_ms}")
-			state = %{interval_ms: t, attempt: attempt, max: max, start_ms: start_ms}
-			# 正常終了でも再起動されるよう permanent を利用する
-			send(self(), :step)
+			# Supervisorを使わないので自力で即時終了を行う
+			send(self(), :shutdown)
+			state = %{attempt: attempt, max: max, start_ms: start_ms}
 			{:ok, state}
 		end
 
 		@impl true
-		def handle_info(:step, %{attempt: attempt, max: max, start_ms: start_ms} = state) do
-			if attempt <= max do
-				IO.puts("[sup] crashing (#{attempt}/#{max})")
-				IO.puts("[sup dbg] crashy.step exit=:normal")
-				Process.exit(self(), :normal)
-				{:noreply, state}
-			else
-				ms = System.monotonic_time(:millisecond) - start_ms
-				IO.puts("[sup] recovered after #{max} restarts")
-				IO.puts("[sup] done in #{ms} ms")
-				{:noreply, state}
-			end
+		def handle_info(:shutdown, state) do
+			Process.exit(self(), :normal)
+			{:noreply, state}
 		end
 
 		@impl true
