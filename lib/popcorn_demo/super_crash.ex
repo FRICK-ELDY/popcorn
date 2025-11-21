@@ -3,13 +3,11 @@ defmodule PopcornDemo.SuperCrash do
 
 	@max_restarts 5
 	@interval_ms 100
-	@counter_name __MODULE__.Counter
 
 	def run(max \\ @max_restarts, interval_ms \\ @interval_ms) when max >= 0 and interval_ms > 0 do
 		start_ms = System.monotonic_time(:millisecond)
 		IO.puts("[sup] supervisor starting (max=#{max})")
-
-		{:ok, _} = ensure_counter(%{max: max, start_ms: start_ms})
+		setup_ets(max, start_ms)
 
 		children = [
 			%{
@@ -30,46 +28,34 @@ defmodule PopcornDemo.SuperCrash do
 		:ok
 	end
 
-	defp ensure_counter(%{max: max, start_ms: start_ms}) do
-		case Process.whereis(@counter_name) do
-			nil ->
-				GenServer.start(__MODULE__.Counter, %{max: max, start_ms: start_ms, count: 0}, name: @counter_name)
-			pid when is_pid(pid) ->
-				GenServer.call(@counter_name, {:reset, max, start_ms})
-				{:ok, pid}
+	defp setup_ets(max, start_ms) do
+		case :ets.whereis(:sup_demo) do
+			:undefined -> :ets.new(:sup_demo, [:named_table, :public])
+			_ -> :ok
 		end
-	end
-
-	defmodule Counter do
-		use GenServer
-
-		@impl true
-		def init(%{max: max, start_ms: start_ms, count: count}) do
-			{:ok, %{max: max, start_ms: start_ms, count: count}}
-		end
-
-		@impl true
-		def handle_call(:next, _from, %{count: count} = state) do
-			new_state = %{state | count: count + 1}
-			{:reply, {new_state.count, state.start_ms, state.max}, new_state}
-		end
-
-		@impl true
-		def handle_call({:reset, max, start_ms}, _from, _state) do
-			{:reply, :ok, %{max: max, start_ms: start_ms, count: 0}}
-		end
+		:ets.insert(:sup_demo, {:restarts, 0})
+		:ets.insert(:sup_demo, {:max, max})
+		:ets.insert(:sup_demo, {:start_ms, start_ms})
 	end
 
 	defmodule Crashy do
 		use GenServer
 
-		@counter PopcornDemo.SuperCrash.Counter
-
 		def start_link(args), do: GenServer.start_link(__MODULE__, args)
 
 		@impl true
 		def init(%{interval_ms: t}) do
-			{attempt, start_ms, max} = GenServer.call(@counter, :next)
+			attempt = :ets.update_counter(:sup_demo, :restarts, {2, 1}, {:restarts, 0})
+			start_ms =
+				case :ets.lookup(:sup_demo, :start_ms) do
+					[{:start_ms, v}] -> v
+					_ -> System.monotonic_time(:millisecond)
+				end
+			max =
+				case :ets.lookup(:sup_demo, :max) do
+					[{:max, v}] -> v
+					_ -> 0
+				end
 			IO.puts("[sup] worker started")
 			state = %{interval_ms: t, attempt: attempt, max: max, start_ms: start_ms}
 			if attempt <= max do
