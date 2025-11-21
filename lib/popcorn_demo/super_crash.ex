@@ -95,14 +95,23 @@ defmodule PopcornDemo.SuperCrash do
 			IO.puts("[sup] worker started")
 			IO.puts("[sup dbg] crashy.init attempt=#{attempt} max=#{max} start_ms=#{start_ms}")
 			state = %{interval_ms: t, attempt: attempt, max: max, start_ms: start_ms}
+			# 正常終了でも再起動されるよう permanent を利用する
+			send(self(), :step)
+			{:ok, state}
+		end
+
+		@impl true
+		def handle_info(:step, %{attempt: attempt, max: max, start_ms: start_ms} = state) do
 			if attempt <= max do
 				IO.puts("[sup] crashing (#{attempt}/#{max})")
-				exit(:boom)
+				IO.puts("[sup dbg] crashy.step exit=:normal")
+				Process.exit(self(), :normal)
+				{:noreply, state}
 			else
 				ms = System.monotonic_time(:millisecond) - start_ms
 				IO.puts("[sup] recovered after #{max} restarts")
 				IO.puts("[sup] done in #{ms} ms")
-				{:ok, state}
+				{:noreply, state}
 			end
 		end
 
