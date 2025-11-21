@@ -15,7 +15,12 @@ defmodule PopcornDemo.SuperCrash do
 			{__MODULE__.Crashy, %{interval_ms: interval_ms}}
 		]
 
-		{:ok, _sup} = Supervisor.start_link(children, strategy: :one_for_one)
+		{:ok, _sup} =
+			Supervisor.start_link(children,
+				strategy: :one_for_one,
+				max_restarts: max + 2,
+				max_seconds: 2
+			)
 		:ok
 	end
 
@@ -60,19 +65,19 @@ defmodule PopcornDemo.SuperCrash do
 		def init(%{interval_ms: t}) do
 			{attempt, start_ms, max} = GenServer.call(@counter, :next)
 			IO.puts("[sup] worker started")
+			state = %{interval_ms: t, attempt: attempt, max: max, start_ms: start_ms}
 			if attempt <= max do
-				Process.send_after(self(), {:crash, attempt, max}, t)
-				{:ok, %{interval_ms: t, attempt: attempt, max: max, start_ms: start_ms}}
+				{:ok, state, t}
 			else
 				ms = System.monotonic_time(:millisecond) - start_ms
 				IO.puts("[sup] recovered after #{max} restarts")
 				IO.puts("[sup] done in #{ms} ms")
-				{:ok, %{interval_ms: t, attempt: attempt, max: max, start_ms: start_ms}}
+				{:ok, state}
 			end
 		end
 
 		@impl true
-		def handle_info({:crash, attempt, max}, state) do
+		def handle_info(:timeout, %{attempt: attempt, max: max} = state) do
 			IO.puts("[sup] crashing (#{attempt}/#{max})")
 			raise "boom"
 		end
@@ -81,5 +86,3 @@ defmodule PopcornDemo.SuperCrash do
 		def handle_info(_msg, state), do: {:noreply, state}
 	end
 end
-
-
