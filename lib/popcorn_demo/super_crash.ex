@@ -59,9 +59,9 @@ defmodule PopcornDemo.SuperCrash do
 		def init(_args) do
 			{attempt, start_ms, max} = GenServer.call(PopcornDemo.SuperCrash.Counter, :next)
 			IO.puts("[sup] worker started")
-			IO.puts("[sup] crashing (#{attempt}/#{max})")
 			state = %{attempt: attempt, max: max, start_ms: start_ms}
 			if attempt <= max do
+				IO.puts("[sup] crashing (#{attempt}/#{max})")
 				send(self(), :shutdown)
 				{:ok, state}
 			else
