@@ -10,6 +10,7 @@ export function injectNav() {
       <a href="${demoPath}parallel.html"><button>Parallel</button></a>
       <a href="${demoPath}pingpong.html"><button>PingPong</button></a>
       <a href="${demoPath}ring.html"><button>Ring</button></a>
+      <a href="${demoPath}supervisor.html"><button>supervisor</button></a>
       <span id="status" class="muted"></span>
   `;
 }
