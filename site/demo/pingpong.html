@@ -17,6 +17,19 @@
       <pre id="logs"></pre>
     </section>
 
+    <section id="about-pane">
+      <h3>About this demo</h3>
+      <pre id="about-md">
+## このデモで分かること
+- いわゆるプロセス間通信。
+- 2アクター（Ping/Pong）が send/receive で非同期にラウンドトリップする挙動を確認できます。
+- 同期/非同期の違い: 開始は handle_call({:start, pong}, ...)（同期）、往復は handle_info/2（非同期）で処理される
+- メールボックスと停止条件: 受信ごとにカウントを進め、@rounds 到達で「done in X ms」を出して停止する流れを観察できます。
+- ブラウザWASMでもOTP流儀: アクター間のメッセージングがブラウザ内（WASM上）でもそのまま機能することを確認できます。
+
+      </pre>
+    </section>
+
     <script type="module">
       import { runDemo } from "../assets/demo.js";
       import { injectNav } from "../assets/nav.js";

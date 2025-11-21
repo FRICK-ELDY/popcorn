@@ -17,6 +17,17 @@
       <pre id="logs"></pre>
     </section>
 
+    <section id="about-pane">
+      <h3>About this demo</h3>
+      <pre id="about-md">
+## このデモで分かること
+- Elixirと言えば、supervisorが使える事！
+- Erlang/OTPの「自己修復（再起動）」「段階的リトライ」パターンがWASM上でも成立
+- クラッシュに頼らず「正常終了での再起動」も制御できる
+- 上限・時間の設計でメルトダウンを抑制しつつ復旧時間を計測できる
+      </pre>
+    </section>
+
     <script type="module">
       import { runDemo } from "../assets/demo.js";
       import { injectNav } from "../assets/nav.js";

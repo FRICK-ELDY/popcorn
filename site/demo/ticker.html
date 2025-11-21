@@ -17,6 +17,16 @@
       <pre id="logs"></pre>
     </section>
 
+    <section id="about-pane">
+      <h3>About this demo</h3>
+      <pre id="about-md">
+## このデモで分かること
+- GenServerの定期実行
+- 状態管理（カウント/実行フラグ）
+- WASM上でもOTPの定石（init→timeout→handle_infoサイクル）がそのまま通用する
+      </pre>
+    </section>
+
     <script type="module">
       import { runDemo } from "../assets/demo.js";
       import { injectNav } from "../assets/nav.js";

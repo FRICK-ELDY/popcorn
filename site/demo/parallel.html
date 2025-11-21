@@ -17,6 +17,18 @@
       <pre id="logs"></pre>
     </section>
 
+    <section id="about-pane">
+      <h3>About this demo</h3>
+      <pre id="about-md">
+## このデモで分かること
+- 計算できた。
+- 高負荷CPU処理の基準計測: Elixir on WASM で純粋関数（フィボナッチ）を実行し、実時間を測る最小例。
+- 高速化手法（fast doubling）で fib(30..32) を順に計算し、所要時間を最後に出力。
+- WASM上でも System.monotonic_time/1 による計測・IOログ・関数分解が通常どおり使える。
+
+      </pre>
+    </section>
+
     <script type="module">
       import { runDemo } from "../assets/demo.js";
       import { injectNav } from "../assets/nav.js";

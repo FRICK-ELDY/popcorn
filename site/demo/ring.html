@@ -17,6 +17,18 @@
       <pre id="logs"></pre>
     </section>
 
+    <section id="about-pane">
+      <h3>About this demo</h3>
+      <pre id="about-md">
+## このデモで分かること
+- 多数アクターのトポロジ構築: PopcornDemo.Ring.run/2 が spawn_link で約50個のアクターを起動し、{:set_next, pid} を送ってリング状に隣接接続します
+- トークンリングの動作: 始点に {:token, 1, hops, origin} を送り、各アクターが隣へトークンを渡します。hop == max で origin に :done を返し、全体の所要時間を計測・出力します（[ring] done in X ms）。
+- 多数アクター生成の軽さ（WASM上でもBEAM流の軽量プロセス）
+- メッセージ一方向ホッピングによるスケジュール感（進捗ログで体感）
+- トポロジ駆動の並行設計（リング→拡張でメッシュ/ツリーへ）
+      </pre>
+    </section>
+
     <script type="module">
       import { runDemo } from "../assets/demo.js";
       import { injectNav } from "../assets/nav.js";
