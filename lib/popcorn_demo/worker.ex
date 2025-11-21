@@ -20,6 +20,7 @@ defmodule PopcornDemo.Worker do
 		:ok = PopcornDemo.PingPong.run()
 		:ok = PopcornDemo.Ring.run()
 		:ok = PopcornDemo.SuperCrash.run()
+		:ok = PopcornDemo.MonteCarloPi.run()
 		{:noreply, state}
 	end
 

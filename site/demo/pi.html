@@ -1,0 +1,33 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MonteCarlo Pi - Popcorn Demo</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" sizes="any">
+    <link rel="stylesheet" href="../assets/style.css">
+  </head>
+  <body>
+    <h1>MonteCarlo Pi</h1>
+    <p class="muted">乱数で円内点の比率から π を推定します。Elixir 側で並列試行します。</p>
+
+    <div class="nav"></div>
+
+    <section id="logs-pane">
+      <h3>Logs</h3>
+      <pre id="logs"></pre>
+    </section>
+
+    <script type="module">
+      import { runDemo } from "../assets/demo.js";
+      import { injectNav } from "../assets/nav.js";
+      injectNav();
+      await runDemo({
+        base: "./wasm",
+        filter: (line) => line.startsWith("[pi]"),
+        transform: (line) => line.replace(/^\[pi\]\s?/, "")
+      });
+    </script>
+  </body>
+  </html>
+
+
