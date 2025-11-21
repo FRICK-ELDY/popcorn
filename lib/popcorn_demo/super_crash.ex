@@ -3,62 +3,78 @@ defmodule PopcornDemo.SuperCrash do
 
 	@max_restarts 5
 	@interval_ms 100
+	@counter_name __MODULE__.Counter
 
 	def run(max \\ @max_restarts, interval_ms \\ @interval_ms) when max >= 0 and interval_ms > 0 do
-		reset_counters()
+		start_ms = System.monotonic_time(:millisecond)
 		IO.puts("[sup] supervisor starting (max=#{max})")
 
+		{:ok, _} = ensure_counter(%{max: max, start_ms: start_ms})
+
 		children = [
-			{__MODULE__.Crashy, %{max: max, interval_ms: interval_ms}}
+			{__MODULE__.Crashy, %{interval_ms: interval_ms}}
 		]
 
 		{:ok, _sup} = Supervisor.start_link(children, strategy: :one_for_one)
 		:ok
 	end
 
-	defp reset_counters do
-		case :ets.whereis(:sup_demo) do
-			:undefined ->
-				:ets.new(:sup_demo, [:named_table, :public, {:read_concurrency, true}])
-			_ ->
-				:ok
+	defp ensure_counter(%{max: max, start_ms: start_ms}) do
+		case Process.whereis(@counter_name) do
+			nil ->
+				GenServer.start_link(__MODULE__.Counter, %{max: max, start_ms: start_ms, count: 0}, name: @counter_name)
+			pid when is_pid(pid) ->
+				GenServer.call(@counter_name, {:reset, max, start_ms})
+				{:ok, pid}
+		end
+	end
+
+	defmodule Counter do
+		use GenServer
+
+		@impl true
+		def init(%{max: max, start_ms: start_ms, count: count}) do
+			{:ok, %{max: max, start_ms: start_ms, count: count}}
 		end
 
-		:ets.insert(:sup_demo, {:restarts, 0})
-		:ets.insert(:sup_demo, {:start_ms, System.monotonic_time(:millisecond)})
+		@impl true
+		def handle_call(:next, _from, %{count: count} = state) do
+			new_state = %{state | count: count + 1}
+			{:reply, {new_state.count, state.start_ms, state.max}, new_state}
+		end
+
+		@impl true
+		def handle_call({:reset, max, start_ms}, _from, _state) do
+			{:reply, :ok, %{max: max, start_ms: start_ms, count: 0}}
+		end
 	end
 
 	defmodule Crashy do
 		use GenServer
 
+		@counter PopcornDemo.SuperCrash.Counter
+
 		def start_link(args), do: GenServer.start_link(__MODULE__, args)
 
 		@impl true
-		def init(%{max: max, interval_ms: t}) do
+		def init(%{interval_ms: t}) do
+			{attempt, start_ms, max} = GenServer.call(@counter, :next)
 			IO.puts("[sup] worker started")
-			Process.send_after(self(), :crash, t)
-			{:ok, %{max: max, interval_ms: t}}
+			if attempt <= max do
+				Process.send_after(self(), {:crash, attempt, max}, t)
+				{:ok, %{interval_ms: t, attempt: attempt, max: max, start_ms: start_ms}}
+			else
+				ms = System.monotonic_time(:millisecond) - start_ms
+				IO.puts("[sup] recovered after #{max} restarts")
+				IO.puts("[sup] done in #{ms} ms")
+				{:ok, %{interval_ms: t, attempt: attempt, max: max, start_ms: start_ms}}
+			end
 		end
 
 		@impl true
-		def handle_info(:crash, %{max: max, interval_ms: t} = state) do
-			count = :ets.update_counter(:sup_demo, :restarts, {2, 1}, {:restarts, 0})
-
-			if count <= max do
-				IO.puts("[sup] crashing (#{count}/#{max})")
-				raise "boom"
-			else
-				now = System.monotonic_time(:millisecond)
-				case :ets.lookup(:sup_demo, :start_ms) do
-					[{:start_ms, start}] ->
-						ms = now - start
-						IO.puts("[sup] recovered after #{max} restarts")
-						IO.puts("[sup] done in #{ms} ms")
-					_ ->
-						IO.puts("[sup] recovered")
-				end
-				{:noreply, state}
-			end
+		def handle_info({:crash, attempt, max}, state) do
+			IO.puts("[sup] crashing (#{attempt}/#{max})")
+			raise "boom"
 		end
 
 		@impl true
