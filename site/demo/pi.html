@@ -47,10 +47,14 @@
 
       function detectApi(entry) {
         if (!entry) return null;
-        if (typeof entry.call === "function") return {kind: "call", fn: entry.call.bind(entry)};
-        if (typeof entry.apply === "function") return {kind: "apply", fn: entry.apply.bind(entry)};
-        if (typeof entry.invoke === "function") return {kind: "invoke", fn: entry.invoke.bind(entry)};
-        if (typeof entry.send === "function") return {kind: "send", fn: entry.send.bind(entry)};
+        const hasOwnCallable = (obj, name) =>
+          Object.prototype.hasOwnProperty.call(obj, name) && typeof obj[name] === "function";
+        // Prefer an explicit messaging API if provided by the runtime
+        if (hasOwnCallable(entry, "send")) return { kind: "send", fn: entry.send.bind(entry) };
+        // Avoid treating Function.prototype.call/apply as runtime APIs
+        if (hasOwnCallable(entry, "invoke")) return { kind: "invoke", fn: entry.invoke.bind(entry) };
+        if (hasOwnCallable(entry, "call")) return { kind: "call", fn: entry.call.bind(entry) };
+        if (hasOwnCallable(entry, "apply")) return { kind: "apply", fn: entry.apply.bind(entry) };
         return null;
       }
 
@@ -69,10 +73,11 @@
           return;
         }
         try {
-          if (api.kind === "call" || api.kind === "apply" || api.kind === "invoke") {
-            await api.fn("Elixir.PopcornDemo.MonteCarloPi", "run", [trials, workers]);
-          } else if (api.kind === "send") {
+          if (api.kind === "send") {
             await api.fn({ to: ":main", mod: "Elixir.PopcornDemo.MonteCarloPi", fun: "run", args: [trials, workers] });
+          } else if (api.kind === "call" || api.kind === "apply" || api.kind === "invoke") {
+            // Fallbacks only if the runtime explicitly exposes own methods
+            await api.fn("Elixir.PopcornDemo.MonteCarloPi", "run", [trials, workers]);
           } else {
             uiLog("未知のAPIです。");
           }
