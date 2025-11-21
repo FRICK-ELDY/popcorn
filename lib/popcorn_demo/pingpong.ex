@@ -15,21 +15,23 @@ defmodule PopcornDemo.PingPong do
 
 		@impl true
 		def init(%{max: max}) do
-			state = %{max: max, pong: nil}
+			state = %{max: max, pong: nil, start_ms: nil}
 			{:ok, state}
 		end
 
 		@impl true
 		def handle_call({:start, pong}, _from, state) do
+			start_ms = System.monotonic_time(:millisecond)
 			send(pong, {:ping, 1})
-			{:reply, :ok, %{state | pong: pong}}
+			{:reply, :ok, %{state | pong: pong, start_ms: start_ms}}
 		end
 
 		@impl true
-		def handle_info({:pong, n}, %{pong: pong, max: max} = state) do
+		def handle_info({:pong, n}, %{pong: pong, max: max, start_ms: start_ms} = state) do
 			IO.puts("[pingpong] ping #{n}")
 			if n >= max do
-				IO.puts("[pingpong] done")
+				ms = System.monotonic_time(:millisecond) - start_ms
+				IO.puts("[pingpong] done in #{ms} ms")
 				{:noreply, state}
 			else
 				send(pong, {:ping, n + 1})
@@ -54,5 +56,3 @@ defmodule PopcornDemo.PingPong do
 		end
 	end
 end
-
-

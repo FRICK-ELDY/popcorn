@@ -8,6 +8,7 @@ defmodule PopcornDemo.Ring do
 	@log_every 50
 
 	def run(nodes \\ @default_nodes, hops \\ @default_hops) when nodes > 1 and hops > 0 do
+		start_ms = System.monotonic_time(:millisecond)
 		IO.puts("[ring] starting #{nodes} processes")
 
 		pids =
@@ -26,7 +27,8 @@ defmodule PopcornDemo.Ring do
 
 		receive do
 			:done ->
-				IO.puts("[ring] done")
+				ms = System.monotonic_time(:millisecond) - start_ms
+				IO.puts("[ring] done in #{ms} ms")
 		after
 			10_000 ->
 				IO.puts("[ring] timeout")
