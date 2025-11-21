@@ -2,7 +2,7 @@ export function injectNav() {
   const nav = document.querySelector(".nav");
   if (!nav) return;
   const parts = location.pathname.split("/").filter(Boolean);
-  const basePath = "/" + (parts.length ? parts[0] + "/" : "");
+  const basePath = "/" + (parts.length ? (parts[0] + "/") : "");
   const demoPath = `${basePath}demo/`;
   nav.innerHTML = `
       <a href="${demoPath}hello.html"><button>Hello</button></a>

@@ -79,7 +79,7 @@ defmodule PopcornDemo.SuperCrash do
 		@impl true
 		def handle_info(:timeout, %{attempt: attempt, max: max} = state) do
 			IO.puts("[sup] crashing (#{attempt}/#{max})")
-			raise "boom"
+			exit(:boom)
 		end
 
 		@impl true
