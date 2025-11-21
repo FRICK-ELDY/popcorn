@@ -41,13 +41,14 @@ export async function runDemo({
   }
 
   try {
-    await startPopcorn({
+    const entry = await startPopcorn({
       base,
       onStdout: (s) => appendLog(s, false),
       onStderr: (s) => appendLog(s, true),
       timeoutMs
     });
     setStatus("ready", true);
+    return entry;
   } catch (err) {
     console.error("Popcorn initialization failed:", err);
     setStatus("failed to init", false);

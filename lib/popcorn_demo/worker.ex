@@ -21,7 +21,6 @@ defmodule PopcornDemo.Worker do
 		:ok = PopcornDemo.Ring.run()
 		:ok = PopcornDemo.SuperCrash.run()
 		:ok = PopcornDemo.MonteCarloPi.run()
-		:ok = PopcornDemo.MonteCarloPi.compare()
 		{:noreply, state}
 	end
 
