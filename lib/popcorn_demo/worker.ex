@@ -28,5 +28,3 @@ defmodule PopcornDemo.Worker do
 		{:noreply, state}
 	end
 end
-
-
