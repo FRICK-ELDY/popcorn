@@ -53,6 +53,16 @@ defmodule PopcornDemo.MonteCarloPi do
 		:ok
 	end
 
+	def compare(cases \\ [100_000, 400_000, 900_000], workers \\ @default_workers) when is_list(cases) and is_integer(workers) and workers > 0 do
+		IO.puts("[pi] compare start cases=#{Enum.join(cases, ",")} workers=#{workers}")
+		Enum.each(cases, fn t ->
+			IO.puts("[pi] --- trials=#{t} ---")
+			:ok = run(t, workers)
+		end)
+		IO.puts("[pi] compare done")
+		:ok
+	end
+
 	defp collect_hits(0, acc), do: acc
 	defp collect_hits(n, acc) do
 		receive do
