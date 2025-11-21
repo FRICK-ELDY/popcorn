@@ -15,15 +15,21 @@ defmodule PopcornDemo.MonteCarloPi do
 		parent = self()
 		trials_per = div(trials, workers)
 		remainder = rem(trials, workers)
-		base_seed = System.monotonic_time(:nanosecond) &&& 0xFFFF_FFFF
+		base_seed = System.monotonic_time(:millisecond) &&& 0xFFFF_FFFF
+		IO.puts("[pi dbg] split per=#{trials_per} rem=#{remainder} base_seed=#{base_seed}")
 
 		for idx <- 0..(workers - 1) do
 			seed = mix_seed(base_seed, idx)
 			n = trials_per + if(idx < remainder, do: 1, else: 0)
-			spawn_link(fn -> send(parent, {:pi_hits, hits_for(n, seed)}) end)
+			IO.puts("[pi dbg] spawn idx=#{idx} n=#{n} seed=#{seed}")
+			pid =
+				spawn_link(fn ->
+					send(parent, {:pi_hits, idx, hits_for(n, seed)})
+				end)
+			_process_ref = Process.monitor(pid)
 		end
 
-		total_hits = collect_hits(workers, 0)
+		total_hits = collect(workers, 0)
 		pi = 4.0 * total_hits / trials
 		ms = System.monotonic_time(:millisecond) - start_ms
 		pi_str = :io_lib.format('~.6f', [pi]) |> IO.iodata_to_binary()
@@ -32,10 +38,22 @@ defmodule PopcornDemo.MonteCarloPi do
 		:ok
 	end
 
-	defp collect_hits(0, acc), do: acc
-	defp collect_hits(n, acc) do
+	defp collect(0, acc), do: acc
+	defp collect(n, acc) do
 		receive do
-			{:pi_hits, k} -> collect_hits(n - 1, acc + k)
+			{:pi_hits, idx, k} ->
+				IO.puts("[pi dbg] recv idx=#{idx} hits=#{k}")
+				collect(n - 1, acc + k)
+			{:DOWN, _ref, :process, pid, reason} ->
+				IO.puts("[pi dbg] DOWN pid=#{inspect(pid)} reason=#{inspect(reason)}")
+				collect(n, acc)
+			other ->
+				IO.puts("[pi dbg] other msg=#{inspect(other)}")
+				collect(n, acc)
+		after
+			10_000 ->
+				IO.puts("[pi dbg] timeout waiting (remaining=#{n})")
+				acc
 		end
 	end
 
