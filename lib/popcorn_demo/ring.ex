@@ -1,6 +1,8 @@
 defmodule PopcornDemo.Ring do
 	@moduledoc false
 
+	alias __MODULE__.NodeProc
+
 	@default_nodes 50
 	@default_hops 500
 	@log_every 50
@@ -63,5 +65,3 @@ defmodule PopcornDemo.Ring do
 		end
 	end
 end
-
-
