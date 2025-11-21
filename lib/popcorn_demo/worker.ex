@@ -18,6 +18,7 @@ defmodule PopcornDemo.Worker do
 		:ok = PopcornDemo.Hello.run()
 		:ok = PopcornDemo.Parallel.run()
 		:ok = PopcornDemo.PingPong.run()
+		:ok = PopcornDemo.Ring.run()
 		{:noreply, state}
 	end
 

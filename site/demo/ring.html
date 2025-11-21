@@ -1,0 +1,33 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ring - Popcorn Demo</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" sizes="any">
+    <link rel="stylesheet" href="../assets/style.css">
+  </head>
+  <body>
+    <h1>Ring</h1>
+    <p class="muted">Elixir の複数プロセスでトークンをリング状に回し、一定間隔でログします。</p>
+
+    <div class="nav"></div>
+
+    <section id="logs-pane">
+      <h3>Logs</h3>
+      <pre id="logs"></pre>
+    </section>
+
+    <script type="module">
+      import { runDemo } from "../assets/demo.js";
+      import { injectNav } from "../assets/nav.js";
+      injectNav();
+      await runDemo({
+        base: "./wasm",
+        filter: (line) => line.startsWith("[ring]"),
+        transform: (line) => line.replace(/^\[ring\]\s?/, "")
+      });
+    </script>
+  </body>
+  </html>
+
+
