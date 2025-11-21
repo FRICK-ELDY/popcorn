@@ -13,14 +13,16 @@ defmodule PopcornDemo.MixProject do
 
   def application do
     [
-      extra_applications: [],
+      extra_applications: [:logger],
       mod: {PopcornDemo.Application, []}
     ]
   end
 
   defp deps do
     [
-      {:popcorn, "~> 0.1.0"}
+      {:popcorn, "~> 0.1.0"},
+      {:bandit, "~> 1.5"},
+      {:jason, "~> 1.4"}
     ]
   end
 end
